@@ -1,0 +1,21 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <Style src="project://database/Assets/Editor/UIBuilder/BehaviourTree/BehaviourTreeEditor.uss?fileID=7433441132597879392&amp;guid=4fbf7e53c15a0409ea55616bbbd00b04&amp;type=3#BehaviourTreeEditor" />
+    <Editor.SD.ECSBT.UIBuilder.Common.SplitView fixed-pane-initial-dimension="250">
+        <engine:VisualElement name="left-panel" style="flex-grow: 1; width: 100px;">
+            <Editor.SD.ECSBT.UIBuilder.Common.SplitView orientation="Vertical" fixed-pane-initial-dimension="250">
+                <engine:VisualElement name="inspector-container" style="flex-grow: 1;">
+                    <engine:Label text="Inspector" style="background-color: rgb(37, 37, 37); color: rgb(195, 196, 195); -unity-text-outline-color: rgba(32, 32, 32, 0);" />
+                    <Editor.SD.ECSBT.UIBuilder.Common.InspectorView />
+                </engine:VisualElement>
+                <engine:VisualElement name="blackboard-container" style="flex-grow: 1;">
+                    <engine:Label text="Blackboard" name="Label" style="background-color: rgb(37, 37, 37); color: rgb(195, 196, 195); -unity-text-outline-color: rgba(32, 32, 32, 0);" />
+                    <engine:IMGUIContainer />
+                </engine:VisualElement>
+            </Editor.SD.ECSBT.UIBuilder.Common.SplitView>
+        </engine:VisualElement>
+        <engine:VisualElement name="right-panel" style="flex-grow: 1;">
+            <engine:Label text="Tree View" style="background-color: rgb(32, 32, 32); color: rgb(196, 196, 196);" />
+            <Editor.SD.ECSBT.UIBuilder.BehaviourTree.BehaviourTreeView style="flex-grow: 1;" />
+        </engine:VisualElement>
+    </Editor.SD.ECSBT.UIBuilder.Common.SplitView>
+</engine:UXML>

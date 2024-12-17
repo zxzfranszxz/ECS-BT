@@ -1,0 +1,23 @@
+<UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="True">
+    <Style src="project://database/Assets/Editor/UIBuilder/BehaviourTree/NodeView.uss?fileID=7433441132597879392&amp;guid=e1ff604fa47164c7b9b9498f45f553f8&amp;type=3#NodeView" />
+    <ui:VisualElement name="node-border">
+        <ui:VisualElement name="contents">
+            <ui:VisualElement name="top">
+                <ui:VisualElement name="input" style="-unity-text-align: upper-left; -unity-font-style: normal; min-width: auto;" />
+                <ui:VisualElement name="divider" class="vertical" />
+                <ui:VisualElement name="title">
+                    <ui:Label name="title-label" text="Root" class="unity-text-element unity-label" style="color: rgb(255, 255, 255);" />
+                    <ui:VisualElement name="title-button-container">
+                        <ui:VisualElement name="collapse-button">
+                            <ui:VisualElement name="icon" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:Label text="Description" name="description" />
+                <ui:VisualElement name="divider" class="horizontal" />
+                <ui:VisualElement name="output" style="min-height: 0;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement name="selection-border" picking-mode="Ignore" />
+</UXML>
