@@ -1,4 +1,4 @@
-namespace Game.ECS.AI.BehaviourTree.Components
+namespace SD.ECSBT.BehaviourTree.ECS.Components
 {
     public enum BTVarType : byte
     {

@@ -1,10 +1,9 @@
 using System.Linq;
-using Game.ECS.AI.BehaviourTree.Components;
-using SD.ECSBT.BehaviourTree;
+using SD.ECSBT.BehaviourTree.ECS.Components;
 using Unity.Entities;
 using UnityEngine;
 
-namespace Game.ECS.AI.Authoring
+namespace SD.ECSBT.BehaviourTree.ECS.Authoring
 {
     public class BehaviourTreeAuthoring : MonoBehaviour
     {

@@ -2,7 +2,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 
-namespace Game.ECS.AI.BehaviourTree.Blackboard
+namespace SD.ECSBT.BehaviourTree.ECS.Blackboard
 {
     public struct BlackboardData : IComponentData
     {

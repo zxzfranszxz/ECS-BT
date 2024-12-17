@@ -1,8 +1,7 @@
-using Game.ECS.AI.BehaviourTree.Services;
 using Unity.Burst;
 using Unity.Entities;
 
-namespace Game.ECS.AI.BehaviourTree.Core.Services
+namespace SD.ECSBT.BehaviourTree.ECS.Services
 {
     [BurstCompile]
     public static class BTServiceHelper

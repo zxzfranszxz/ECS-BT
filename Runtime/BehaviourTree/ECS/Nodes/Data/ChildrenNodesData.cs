@@ -1,6 +1,6 @@
 using Unity.Collections;
 
-namespace Game.ECS.AI.BehaviourTree.Components.Nodes
+namespace SD.ECSBT.BehaviourTree.ECS.Nodes.Data
 {
     public struct ChildrenNodesData
     {

@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Game.ECS.AI.BehaviourTree.Components;
-using Game.ECS.AI.BehaviourTree.Components.Nodes;
 using SD.ECSBT.BehaviourTree.Data;
+using SD.ECSBT.BehaviourTree.ECS.Components;
+using SD.ECSBT.BehaviourTree.ECS.Nodes.Data;
 using SD.ECSBT.BehaviourTree.Nodes;
 using Unity.Burst;
 using Unity.Collections;
@@ -12,7 +12,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using Utils.Vector;
 
-namespace Game.ECS.AI.BehaviourTree.Core.Setup
+namespace SD.ECSBT.BehaviourTree.ECS.Setup
 {
     [UpdateInGroup(typeof(InitializationSystemGroup))]
     public partial struct BTInitSystem : ISystem

@@ -1,17 +1,16 @@
 using System;
 using System.Runtime.CompilerServices;
-using Game.ECS.AI.BehaviourTree.Blackboard;
-using Game.ECS.AI.BehaviourTree.Components;
-using Game.ECS.AI.BehaviourTree.Components.Nodes;
-using Game.ECS.AI.BehaviourTree.Instance;
-using Game.ECS.AI.BehaviourTree.Services;
+using SD.ECSBT.BehaviourTree.ECS.Components;
+using SD.ECSBT.BehaviourTree.ECS.Instance;
+using SD.ECSBT.BehaviourTree.ECS.Nodes.Data;
+using SD.ECSBT.BehaviourTree.ECS.Services;
 using SD.ECSBT.BehaviourTree.Nodes;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
 
-namespace Game.ECS.AI.BehaviourTree.Core
+namespace SD.ECSBT.BehaviourTree.ECS
 {
     [BurstCompile]
     public static class BTHelper
@@ -57,7 +56,7 @@ namespace Game.ECS.AI.BehaviourTree.Core
         {
             // clean up
             // clean Blackboard
-            var blackboardData = entityManager.GetComponentData<BlackboardData>(btInstance);
+            var blackboardData = entityManager.GetComponentData<Blackboard.BlackboardData>(btInstance);
             blackboardData.BoolVars.Dispose();
             blackboardData.IntVars.Dispose();
             blackboardData.FloatVars.Dispose();

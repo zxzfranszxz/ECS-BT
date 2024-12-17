@@ -1,14 +1,12 @@
-using Game.ECS.AI.BehaviourTree.Blackboard;
-using Game.ECS.AI.BehaviourTree.Components;
-using Game.ECS.AI.BehaviourTree.Components.Nodes;
-using Game.ECS.AI.BehaviourTree.Core.Services;
-using Game.ECS.AI.BehaviourTree.Instance;
-using SD.ECSBT.BehaviourTree.ECS;
+using SD.ECSBT.BehaviourTree.ECS.Components;
+using SD.ECSBT.BehaviourTree.ECS.Instance;
+using SD.ECSBT.BehaviourTree.ECS.Nodes.Data;
+using SD.ECSBT.BehaviourTree.ECS.Services;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 
-namespace Game.ECS.AI.BehaviourTree.Process
+namespace SD.ECSBT.BehaviourTree.ECS.Process
 {
     [UpdateInGroup(typeof(BTLogicSystemGroup))]
     public partial struct BTProcessSystem : ISystem
@@ -24,7 +22,7 @@ namespace Game.ECS.AI.BehaviourTree.Process
             var ecb = new EntityCommandBuffer(Allocator.Temp);
             var entityManager = state.EntityManager;
             
-            foreach (var (btInstanceRW, blackboardDataRW, ownerRO, entity) in SystemAPI.Query<RefRW<BTInstanceData>, RefRW<BlackboardData>, RefRO<BTOwner>>()
+            foreach (var (btInstanceRW, blackboardDataRW, ownerRO, entity) in SystemAPI.Query<RefRW<BTInstanceData>, RefRW<Blackboard.BlackboardData>, RefRO<BTOwner>>()
                          .WithAll<BTLogicEnabled>().WithEntityAccess())
             {
                 ref var btInstanceData = ref btInstanceRW.ValueRW;

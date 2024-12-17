@@ -3,7 +3,7 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 
-namespace Game.ECS.AI.BehaviourTree.Blackboard
+namespace SD.ECSBT.BehaviourTree.ECS.Blackboard
 {
     [BurstCompile]
     public static class BlackboardHelper

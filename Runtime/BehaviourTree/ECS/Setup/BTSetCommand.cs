@@ -1,7 +1,7 @@
 using Unity.Collections;
 using Unity.Entities;
 
-namespace Game.ECS.AI.BehaviourTree.Setup
+namespace SD.ECSBT.BehaviourTree.ECS.Setup
 {
     public struct BTSetCommand : IComponentData
     {

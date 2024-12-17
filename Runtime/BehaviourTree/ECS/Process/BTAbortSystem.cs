@@ -1,16 +1,14 @@
-using Game.ECS.AI.BehaviourTree.Blackboard;
-using Game.ECS.AI.BehaviourTree.Components;
-using Game.ECS.AI.BehaviourTree.Components.Nodes;
-using Game.ECS.AI.BehaviourTree.Core.Services;
-using Game.ECS.AI.BehaviourTree.Instance;
-using Game.ECS.AI.BehaviourTree.Process;
 using SD.ECSBT.BehaviourTree.Data;
-using SD.ECSBT.BehaviourTree.ECS;
+using SD.ECSBT.BehaviourTree.ECS.Blackboard;
+using SD.ECSBT.BehaviourTree.ECS.Components;
+using SD.ECSBT.BehaviourTree.ECS.Instance;
+using SD.ECSBT.BehaviourTree.ECS.Nodes.Data;
+using SD.ECSBT.BehaviourTree.ECS.Services;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 
-namespace Game.ECS.AI.BehaviourTree.Core.Process
+namespace SD.ECSBT.BehaviourTree.ECS.Process
 {
     [UpdateInGroup(typeof(BTLogicSystemGroup))]
     [UpdateBefore(typeof(BTProcessSystem))]

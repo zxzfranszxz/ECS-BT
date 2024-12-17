@@ -2,7 +2,7 @@ using SD.ECSBT.BehaviourTree.Data;
 using Unity.Collections;
 using Unity.Entities;
 
-namespace Game.ECS.AI.BehaviourTree.Blackboard
+namespace SD.ECSBT.BehaviourTree.ECS.Blackboard
 {
     public struct AbortSubscriberElement : IBufferElementData
     {

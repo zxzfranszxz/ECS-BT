@@ -1,7 +1,7 @@
 using Unity.Collections;
 using Unity.Mathematics;
 
-namespace Game.ECS.AI.BehaviourTree.Components.Nodes
+namespace SD.ECSBT.BehaviourTree.ECS.Nodes.Data
 {
     public struct NodeVarsData
     {
@@ -12,8 +12,5 @@ namespace Game.ECS.AI.BehaviourTree.Components.Nodes
         public NativeHashMap<FixedString32Bytes, float2> Float2Vars;
         public NativeHashMap<FixedString32Bytes, float3> Float3Vars;
         public NativeHashMap<FixedString32Bytes, FixedString32Bytes> StringVars;
-        // public NativeHashMap<FixedString32Bytes, AbortType> AbortVars;
-        // public NativeHashMap<FixedString32Bytes, BlackboardConditionType> BlackboardConditionVars;
-        // public NativeHashMap<FixedString32Bytes, NotifyType> NotifyVars;
     }
 }

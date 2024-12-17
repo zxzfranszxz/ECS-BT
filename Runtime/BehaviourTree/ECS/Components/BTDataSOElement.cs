@@ -1,7 +1,6 @@
-using SD.ECSBT.BehaviourTree;
 using Unity.Entities;
 
-namespace Game.ECS.AI.BehaviourTree.Components
+namespace SD.ECSBT.BehaviourTree.ECS.Components
 {
     public struct BTDataSOElement : IBufferElementData
     {

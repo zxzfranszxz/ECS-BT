@@ -1,6 +1,6 @@
 using Unity.Entities;
 
-namespace Game.ECS.AI
+namespace SD.ECSBT.BehaviourTree.ECS
 {
     public struct AIControllerData : IComponentData
     {

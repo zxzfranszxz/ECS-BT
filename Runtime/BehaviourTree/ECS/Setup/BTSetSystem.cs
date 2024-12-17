@@ -1,12 +1,9 @@
-using Game.ECS.AI;
-using Game.ECS.AI.BehaviourTree.Blackboard;
-using Game.ECS.AI.BehaviourTree.Components;
-using Game.ECS.AI.BehaviourTree.Components.Nodes;
-using Game.ECS.AI.BehaviourTree.Core;
-using Game.ECS.AI.BehaviourTree.Instance;
-using Game.ECS.AI.BehaviourTree.Services;
-using Game.ECS.AI.BehaviourTree.Setup;
 using SD.ECSBT.BehaviourTree.Data;
+using SD.ECSBT.BehaviourTree.ECS.Blackboard;
+using SD.ECSBT.BehaviourTree.ECS.Components;
+using SD.ECSBT.BehaviourTree.ECS.Instance;
+using SD.ECSBT.BehaviourTree.ECS.Nodes.Data;
+using SD.ECSBT.BehaviourTree.ECS.Services;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -73,7 +70,7 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
                 ref readonly var btData = ref SystemAPI.GetComponentRO<BTData>(btEntity).ValueRO;
 
                 // create Blackboard
-                var blackboardData = new Game.ECS.AI.BehaviourTree.Blackboard.BlackboardData
+                var blackboardData = new Blackboard.BlackboardData
                 {
                     BoolVars = new NativeHashMap<FixedString32Bytes, bool>(0, Allocator.Persistent),
                     IntVars = new NativeHashMap<FixedString32Bytes, int>(0, Allocator.Persistent),

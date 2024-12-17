@@ -1,9 +1,8 @@
 using System;
-using SD.ECSBT.BehaviourTree.Nodes;
 using Unity.Collections;
 using Unity.Entities;
 
-namespace Game.ECS.AI.BehaviourTree.Components.Nodes
+namespace SD.ECSBT.BehaviourTree.ECS.Nodes.Data
 {
     public struct NodeData
     {

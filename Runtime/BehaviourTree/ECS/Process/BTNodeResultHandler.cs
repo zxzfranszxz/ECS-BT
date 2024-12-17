@@ -1,13 +1,13 @@
 using System;
-using Game.ECS.AI.BehaviourTree.Components;
-using Game.ECS.AI.BehaviourTree.Components.Nodes;
-using Game.ECS.AI.BehaviourTree.Instance;
+using SD.ECSBT.BehaviourTree.ECS.Components;
+using SD.ECSBT.BehaviourTree.ECS.Instance;
 using SD.ECSBT.BehaviourTree.ECS.Nodes.Composite;
+using SD.ECSBT.BehaviourTree.ECS.Nodes.Data;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 
-namespace Game.ECS.AI.BehaviourTree.Process
+namespace SD.ECSBT.BehaviourTree.ECS.Process
 {
     [BurstCompile]
     public static class BTNodeResultHandler
