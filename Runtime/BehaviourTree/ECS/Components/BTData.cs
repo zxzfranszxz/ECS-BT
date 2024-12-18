@@ -8,8 +8,5 @@ namespace SD.ECSBT.BehaviourTree.ECS.Components
     {
         public FixedString32Bytes BTName;
         public NativeArray<NodeData> Nodes;
-        public NativeHashMap<int, NodeVarsData> NodeVars;
     }
-
-    public delegate void RunDelegate(ref SystemState state, ref EntityCommandBuffer ecb);
 }

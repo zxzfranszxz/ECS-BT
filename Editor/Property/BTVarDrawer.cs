@@ -44,14 +44,14 @@ namespace Editor.SD.ECSBT.Property
             // Draw fields - varType and id
             if (string.IsNullOrEmpty(typeReference.stringValue))
                 typeReference.stringValue = typeof(string).AssemblyQualifiedName;
-            var currentType = Type.GetType(typeReference.stringValue);
-            
+            var currentType = Type.GetType(typeReference.stringValue) ?? typeof(string);
+
             var supportedTypes = BTVar.SupportedTypes().ToList();
             var contents = BTVar.SupportedTypes().Select(type => new GUIContent(type.Name
             )).ToArray();
             var selectedItem = EditorGUI.Popup(typeRect, supportedTypes.IndexOf(currentType), contents, EditorStyles.popup);
             typeReference.stringValue = supportedTypes[selectedItem].AssemblyQualifiedName;
-            
+
             EditorGUI.PropertyField(idRect, id, new GUIContent("Id:"));
 
             // Draw the appropriate field based on varType
@@ -99,6 +99,7 @@ namespace Editor.SD.ECSBT.Property
             {
                 throw new ArgumentOutOfRangeException();
             }
+
             EditorGUI.EndProperty();
         }
     }

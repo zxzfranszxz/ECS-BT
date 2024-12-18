@@ -96,7 +96,7 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
                     ecb.AddComponent<BTServiceTag>(service);
                     ecb.AddComponent(service, new BTServiceData
                     {
-                        Frequency = btData.NodeVars[node.Id].FloatVars["Frequency"],
+                        Frequency = node.FloatVars["Frequency"],
                         BTEntity = btEntity
                     });
                     ecb.AddComponent(service, new BTInstanceLink { BTInstance = btInstance });
@@ -113,16 +113,16 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
                 foreach (var node in btData.Nodes)
                 {
                     if (node.NodeType != NodeType.Decorator) continue;
-                    if (!btData.NodeVars[node.Id].IntVars.ContainsKey("AbortType")) continue;
-                    var abortType = (AbortType)btData.NodeVars[node.Id].IntVars["AbortType"];
-                    btData.NodeVars[node.Id].IntVars.TryGetValue("NotifyType", out var notifyTypeInt);
+                    if (!node.IntVars.ContainsKey("AbortType")) continue;
+                    var abortType = (AbortType)node.IntVars["AbortType"];
+                    node.IntVars.TryGetValue("NotifyType", out var notifyTypeInt);
                     var notifyType = (NotifyType)notifyTypeInt;
                     ecb.AppendToBuffer(btInstance, new AbortSubscriberElement
                     {
                         NodeId = node.Id,
                         AbortType = abortType,
                         NotifyType = notifyType,
-                        BlackboardId = btData.NodeVars[node.Id].StringVars["Blackboard"]
+                        BlackboardId = node.StringVars["Blackboard"]
                     });
                 }
             }

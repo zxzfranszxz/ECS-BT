@@ -1,6 +1,8 @@
 using System.IO;
 using System.Linq;
+using Editor.SD.ECSBT.CodeGeneration;
 using UnityEditor;
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -42,10 +44,9 @@ namespace Editor.SD.ECSBT.Settings
         {
             var root = rootVisualElement;
 
-            var processSystemClassName = new TextField("");
-            processSystemClassName.value = _settings.processSystemClassName;
-            processSystemClassName.RegisterValueChangedCallback(evt => _settings.processSystemClassName = evt.newValue);
-            root.Add(processSystemClassName);
+            var serializedObject = new SerializedObject(_settings);
+            var inspectorElement = new InspectorElement(serializedObject);
+            rootVisualElement.Add(inspectorElement);
 
             // Create button
             var saveButton = new Button();
@@ -56,6 +57,14 @@ namespace Editor.SD.ECSBT.Settings
                 AssetDatabase.SaveAssets();
             };
             root.Add(saveButton);
+            
+            var generateButton = new Button();
+            generateButton.text = "Generate";
+            generateButton.clicked += () =>
+            {
+                ProcessSystemGenerator.Generate(_settings);
+            };
+            root.Add(generateButton);
         }
     }
 }

@@ -39,13 +39,10 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
                 var btEntity = ecb.CreateEntity();
                 ecb.SetName(btEntity, btDataSO.name);
                 
-                var nodesWithVarsCount = btDataSO.nodes.Count(dto => dto.vars.Count > 0 || dto.blackboardVars.Count > 0);
-                
                 var btData = new BTData
                 {
                     BTName = btDataSO.name,
-                    Nodes = new NativeArray<NodeData>(btDataSO.nodes.Count, Allocator.Persistent),
-                    NodeVars = new NativeHashMap<int, NodeVarsData>(nodesWithVarsCount, Allocator.Persistent)
+                    Nodes = new NativeArray<NodeData>(btDataSO.nodes.Count, Allocator.Persistent)
                 };
                 
                 var rootNode = btDataSO.RootNode;
@@ -68,6 +65,7 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
             var nodeData = new NodeData
             {
                 Id = nodeId,
+                StableTypeHash = TypeManager.GetTypeInfo(TypeManager.GetTypeIndex(nodeDataDto.Type)).StableTypeHash,
                 NodeComponentType = ComponentType.ReadWrite(nodeDataDto.Type),
                 NodeType = BTHelper.GetNodeType(nodeDataDto.Type),
                 Guid = nodeDataDto.Guid
@@ -76,8 +74,7 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
             // 1) add node vars
             if (nodeDataDto.vars.Count > 0 || nodeDataDto.blackboardVars.Count > 0)
             {
-                InitNodeVars(ref nodeData, ref nodeDataDto, out var nodeVarsData);
-                btData.NodeVars.Add(nodeData.Id, nodeVarsData);
+                InitNodeVars(ref nodeData, ref nodeDataDto);
             }
             
             // 2) setup children
@@ -116,21 +113,16 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
             btData.Nodes[nodeData.Id] = nodeData;
         }
 
-        private static void InitNodeVars(ref NodeData nodeData, ref NodeDataDto nodeDataDto, out NodeVarsData nodeVarsData)
+        private static void InitNodeVars(ref NodeData nodeData, ref NodeDataDto nodeDataDto)
         {
-            nodeVarsData = new NodeVarsData
-            {
-                NodeId = nodeData.Id
-            };
-            
             // bool
             var vars = nodeDataDto.vars.Where(var => var.Type == typeof(bool)).ToList();
             if(vars.Any())
             {
-                nodeVarsData.BoolVars = new NativeHashMap<FixedString32Bytes, bool>(vars.Count, Allocator.Persistent);
+                nodeData.BoolVars = new NativeHashMap<FixedString32Bytes, bool>(vars.Count, Allocator.Persistent);
                 foreach (var btVar in vars)
                 {
-                    nodeVarsData.BoolVars.Add(btVar.id, bool.Parse(btVar.value));
+                    nodeData.BoolVars.Add(btVar.id, bool.Parse(btVar.value));
                 }
             }
             
@@ -138,10 +130,10 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
             vars = nodeDataDto.vars.Where(var => var.Type == typeof(int)).ToList();
             if(vars.Any())
             {
-                nodeVarsData.IntVars = new NativeHashMap<FixedString32Bytes, int>(vars.Count, Allocator.Persistent);
+                nodeData.IntVars = new NativeHashMap<FixedString32Bytes, int>(vars.Count, Allocator.Persistent);
                 foreach (var btVar in vars)
                 {
-                    nodeVarsData.IntVars.Add(btVar.id, int.Parse(btVar.value));
+                    nodeData.IntVars.Add(btVar.id, int.Parse(btVar.value));
                 }
             }
             
@@ -149,10 +141,10 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
             vars = nodeDataDto.vars.Where(var => var.Type == typeof(float)).ToList();
             if(vars.Any())
             {
-                nodeVarsData.FloatVars = new NativeHashMap<FixedString32Bytes, float>(vars.Count, Allocator.Persistent);
+                nodeData.FloatVars = new NativeHashMap<FixedString32Bytes, float>(vars.Count, Allocator.Persistent);
                 foreach (var btVar in vars)
                 {
-                    nodeVarsData.FloatVars.Add(btVar.id, float.Parse(btVar.value));
+                    nodeData.FloatVars.Add(btVar.id, float.Parse(btVar.value));
                 }
             }
             
@@ -161,14 +153,14 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
             if(vars.Any() || nodeDataDto.blackboardVars.Any())
             {
                 var capacity = vars.Count + nodeDataDto.blackboardVars.Count;
-                nodeVarsData.StringVars = new NativeHashMap<FixedString32Bytes, FixedString32Bytes>(capacity, Allocator.Persistent);
+                nodeData.StringVars = new NativeHashMap<FixedString32Bytes, FixedString32Bytes>(capacity, Allocator.Persistent);
                 foreach (var btVar in vars)
                 {
-                    nodeVarsData.StringVars.Add(btVar.id, btVar.value);
+                    nodeData.StringVars.Add(btVar.id, btVar.value);
                 }
                 foreach (var varLink in nodeDataDto.blackboardVars)
                 {
-                    nodeVarsData.StringVars.Add(varLink.id, varLink.varId);
+                    nodeData.StringVars.Add(varLink.id, varLink.varId);
                 }
             }
             
@@ -176,11 +168,11 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
             vars = nodeDataDto.vars.Where(var => var.Type == typeof(Vector2)).ToList();
             if(vars.Any())
             {
-                nodeVarsData.Float2Vars = new NativeHashMap<FixedString32Bytes, float2>(vars.Count, Allocator.Persistent);
+                nodeData.Float2Vars = new NativeHashMap<FixedString32Bytes, float2>(vars.Count, Allocator.Persistent);
                 foreach (var btVar in vars)
                 {
                     VectorHelper.TryParseVector2(btVar.value, out var value);
-                    nodeVarsData.Float2Vars.Add(btVar.id, value);
+                    nodeData.Float2Vars.Add(btVar.id, value);
                 }
             }
             
@@ -188,11 +180,11 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
             vars = nodeDataDto.vars.Where(var => var.Type == typeof(Vector3)).ToList();
             if(vars.Any())
             {
-                nodeVarsData.Float3Vars = new NativeHashMap<FixedString32Bytes, float3>(vars.Count, Allocator.Persistent);
+                nodeData.Float3Vars = new NativeHashMap<FixedString32Bytes, float3>(vars.Count, Allocator.Persistent);
                 foreach (var btVar in vars)
                 {
                     VectorHelper.TryParseVector3(btVar.value, out var value);
-                    nodeVarsData.Float3Vars.Add(btVar.id, value);
+                    nodeData.Float3Vars.Add(btVar.id, value);
                 }
             }
             
@@ -200,11 +192,11 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
             vars = nodeDataDto.vars.Where(var => var.Type == typeof(AbortType)).ToList();
             if(vars.Any())
             {
-                if(!nodeVarsData.IntVars.IsCreated)
-                    nodeVarsData.IntVars = new NativeHashMap<FixedString32Bytes, int>(vars.Count, Allocator.Persistent);
+                if(!nodeData.IntVars.IsCreated)
+                    nodeData.IntVars = new NativeHashMap<FixedString32Bytes, int>(vars.Count, Allocator.Persistent);
                 foreach (var btVar in vars)
                 {
-                    nodeVarsData.IntVars.Add(btVar.id, (int)Enum.Parse(btVar.Type, btVar.value));
+                    nodeData.IntVars.Add(btVar.id, (int)Enum.Parse(btVar.Type, btVar.value));
                 }
             }
             
@@ -212,11 +204,11 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
             vars = nodeDataDto.vars.Where(var => var.Type == typeof(NotifyType)).ToList();
             if(vars.Any())
             {
-                if(!nodeVarsData.IntVars.IsCreated)
-                    nodeVarsData.IntVars = new NativeHashMap<FixedString32Bytes, int>(vars.Count, Allocator.Persistent);
+                if(!nodeData.IntVars.IsCreated)
+                    nodeData.IntVars = new NativeHashMap<FixedString32Bytes, int>(vars.Count, Allocator.Persistent);
                 foreach (var btVar in vars)
                 {
-                    nodeVarsData.IntVars.Add(btVar.id, (int)Enum.Parse(btVar.Type, btVar.value));
+                    nodeData.IntVars.Add(btVar.id, (int)Enum.Parse(btVar.Type, btVar.value));
                 }
             }
             
@@ -224,11 +216,11 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
             vars = nodeDataDto.vars.Where(var => var.Type == typeof(BlackboardConditionType)).ToList();
             if(vars.Any())
             {
-                if(!nodeVarsData.IntVars.IsCreated)
-                    nodeVarsData.IntVars = new NativeHashMap<FixedString32Bytes, int>(vars.Count, Allocator.Persistent);
+                if(!nodeData.IntVars.IsCreated)
+                    nodeData.IntVars = new NativeHashMap<FixedString32Bytes, int>(vars.Count, Allocator.Persistent);
                 foreach (var btVar in vars)
                 {
-                    nodeVarsData.IntVars.Add(btVar.id, (int)Enum.Parse(btVar.Type, btVar.value));
+                    nodeData.IntVars.Add(btVar.id, (int)Enum.Parse(btVar.Type, btVar.value));
                 }
             }
         }
@@ -240,29 +232,21 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
             {
                 if (btData.ValueRW.Nodes.IsCreated)
                 {
-                    foreach (var nodeData in btData.ValueRW.Nodes)
+                    for (var i = 0; i < btData.ValueRW.Nodes.Length; i++)
                     {
+                        var nodeData = btData.ValueRW.Nodes[i];
                         nodeData.Children.Dispose();
+
+                        nodeData.BoolVars.Dispose();
+                        nodeData.IntVars.Dispose();
+                        nodeData.FloatVars.Dispose();
+                        nodeData.Float2Vars.Dispose();
+                        nodeData.Float3Vars.Dispose();
+                        nodeData.StringVars.Dispose();
                     }
-                    
+
                     btData.ValueRW.Nodes.Dispose();
                 }
-                
-                if (btData.ValueRW.NodeVars.IsCreated)
-                {
-                    using var enumerator = btData.ValueRW.NodeVars.GetEnumerator();
-                    while (enumerator.MoveNext())
-                    {
-                        ref var nodeVarData = ref enumerator.Current.Value;
-                        nodeVarData.BoolVars.Dispose();
-                        nodeVarData.IntVars.Dispose();
-                        nodeVarData.FloatVars.Dispose();
-                        nodeVarData.Float2Vars.Dispose();
-                        nodeVarData.Float3Vars.Dispose();
-                        nodeVarData.StringVars.Dispose();
-                    }
-                }
-                btData.ValueRW.NodeVars.Dispose();
             }
         }
     }

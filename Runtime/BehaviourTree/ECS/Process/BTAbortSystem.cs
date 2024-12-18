@@ -11,7 +11,6 @@ using Unity.Entities;
 namespace SD.ECSBT.BehaviourTree.ECS.Process
 {
     [UpdateInGroup(typeof(BTLogicSystemGroup))]
-    [UpdateBefore(typeof(BTProcessSystem))]
     public partial struct BTAbortSystem : ISystem
     {
         [BurstCompile]
