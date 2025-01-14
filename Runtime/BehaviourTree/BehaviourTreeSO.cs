@@ -12,7 +12,7 @@ namespace SD.ECSBT.BehaviourTree
     public class BehaviourTreeSO : ScriptableObject
     {
         public List<NodeDataDto> nodes;
-        public BlackboardData blackboard;
+        public BlackboardDataForSo blackboard;
         
         public NodeDataDto RootNode => nodes.FirstOrDefault(dto => typeof(IRootNode).IsAssignableFrom(dto.Type));
 

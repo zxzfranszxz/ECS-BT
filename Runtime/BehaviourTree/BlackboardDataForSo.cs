@@ -5,7 +5,7 @@ using SD.ECSBT.BehaviourTree.Data;
 namespace SD.ECSBT.BehaviourTree
 {
     [Serializable]
-    public class BlackboardData
+    public class BlackboardDataForSo
     {
         public List<BTVarInfo> vars = new();
     }
