@@ -1,6 +1,6 @@
 {
   "name": "com.snakydevelop.ecsbt",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "displayName": "ECS BehaviourTree",
   "description": "Behaviour tree for Unity ECS/DOTS.",
   "unity": "2022.3",

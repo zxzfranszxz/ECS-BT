@@ -168,7 +168,7 @@ namespace SD.ECSBT.BehaviourTree.ECS.Blackboard
         
         // float2
         [BurstCompile]
-        public static void UpdateVar(ref BlackboardData blackboardData, ref EntityCommandBuffer ecb, FixedString32Bytes blackboardId, float2 value, in Entity btInstance)
+        public static void UpdateVar(ref BlackboardData blackboardData, ref EntityCommandBuffer ecb, in FixedString32Bytes blackboardId, in float2 value, in Entity btInstance)
         {
             var shouldNotify = false;
             var notifyType = NotifyType.OnValueChange;
@@ -193,7 +193,7 @@ namespace SD.ECSBT.BehaviourTree.ECS.Blackboard
         
         // float3
         [BurstCompile]
-        public static void UpdateVar(ref BlackboardData blackboardData, ref EntityCommandBuffer ecb, FixedString32Bytes blackboardId, float3 value, in Entity btInstance)
+        public static void UpdateVar(ref BlackboardData blackboardData, ref EntityCommandBuffer ecb, in FixedString32Bytes blackboardId, in float3 value, in Entity btInstance)
         {
             var shouldNotify = false;
             var notifyType = NotifyType.OnValueChange;
