@@ -14,7 +14,6 @@ namespace SD.ECSBT.BehaviourTree.ECS.Nodes.Action.Wait
     public struct AIWaitNode : IActionNode
     {
         public float LeftTime;
-        public Entity BTInstance;
 
         [BurstCompile]
         [NodeHandler(typeof(AIWaitNode))]
@@ -22,14 +21,11 @@ namespace SD.ECSBT.BehaviourTree.ECS.Nodes.Action.Wait
             ref BTInstanceData btInstanceData, ref Blackboard.BlackboardData blackboardData, in BTData btData, in Entity owner, 
             in Entity btInstance, in NodeData node, out ActiveNodeState activeNodeState)
         {
-            var action = ecb.CreateEntity();
-            ecb.SetName(action, "AIWaitAction");
-            ecb.AddComponent(btInstance, new BTActiveNodeLink { ActiveNode = action });
+            var action = BTHelper.CreateAction(ref ecb, "AIWaitAction", btInstance, owner, node);
             
             ecb.AddComponent(action, new AIWaitNode
             {
-                LeftTime = node.FloatVars["Time"],
-                BTInstance = btInstance
+                LeftTime = node.FloatVars["Time"]
             });
 
             activeNodeState = ActiveNodeState.Running;

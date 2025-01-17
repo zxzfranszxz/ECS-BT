@@ -17,13 +17,13 @@ namespace SD.ECSBT.BehaviourTree.ECS.Nodes.Action.Wait
         public void OnUpdate(ref SystemState state)
         {
             var ecb = new EntityCommandBuffer(Allocator.Temp);
-            foreach (var (aiWaitNode, entity) in SystemAPI.Query<RefRW<AIWaitNode>>().WithEntityAccess())
+            foreach (var (aiWaitNode, nodeData, entity) in SystemAPI.Query<RefRW<AIWaitNode>, RefRO<NodeInstanceData>>().WithEntityAccess())
             {
                 aiWaitNode.ValueRW.LeftTime -= SystemAPI.Time.DeltaTime;
                 if (aiWaitNode.ValueRO.LeftTime > 0) continue;
                 
                 var entityManager = state.EntityManager;
-                BTHelper.FinishAction(ref entityManager, ref ecb, in entity, in aiWaitNode.ValueRO.BTInstance,
+                BTHelper.FinishAction(ref entityManager, ref ecb, in entity, in nodeData.ValueRO.BTInstance,
                     ActiveNodeState.Success);
             }
 

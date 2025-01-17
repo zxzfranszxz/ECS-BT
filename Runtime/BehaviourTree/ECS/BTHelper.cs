@@ -2,6 +2,7 @@ using System;
 using System.Runtime.CompilerServices;
 using SD.ECSBT.BehaviourTree.ECS.Components;
 using SD.ECSBT.BehaviourTree.ECS.Instance;
+using SD.ECSBT.BehaviourTree.ECS.Nodes;
 using SD.ECSBT.BehaviourTree.ECS.Nodes.Data;
 using SD.ECSBT.BehaviourTree.ECS.Services;
 using SD.ECSBT.BehaviourTree.Nodes;
@@ -31,6 +32,24 @@ namespace SD.ECSBT.BehaviourTree.ECS
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity CreateAction(ref EntityCommandBuffer ecb, in FixedString32Bytes actionName,
+            in Entity btInstance, in Entity owner, in NodeData nodeData)
+        {
+            var action = ecb.CreateEntity();
+            ecb.SetName(action, actionName);
+            ecb.AddComponent(action, new NodeInstanceData
+            {
+                BTInstance = btInstance,
+                NodeId = nodeData.Id,
+                BTOwner = owner
+            });
+            
+            ecb.AddComponent(btInstance, new BTActiveNodeLink { ActiveNode = action });
+
+            return action;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void FinishAction(ref EntityManager entityManager, ref EntityCommandBuffer ecb,
             in Entity actionEntity, in Entity btInstance, in ActiveNodeState activeNodeState)
         {
@@ -49,7 +68,7 @@ namespace SD.ECSBT.BehaviourTree.ECS
                 Debug.LogError("Unexpected issue in AIWaitActionSystem");
             }
         }
-        
+
         [BurstCompile]
         public static void CleanupBTInstance(ref EntityManager entityManager, ref EntityCommandBuffer ecb,
             in Entity btInstance)
@@ -78,7 +97,7 @@ namespace SD.ECSBT.BehaviourTree.ECS
                 ecb.DestroyEntity(entityManager.GetComponentData<BTActiveNodeLink>(btInstance).ActiveNode);
             ecb.DestroyEntity(btInstance);
         }
-        
+
         [BurstCompile]
         public static void GetBTree(in DynamicBuffer<BTElement> btElements, in FixedString32Bytes btName,
             out Entity btEntity)
