@@ -106,8 +106,6 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
                         Frequency = node.FloatVars["Frequency"],
                         BTEntity = btEntity
                     });
-                    ecb.AddComponent(service, new BTInstanceLink { BTInstance = btInstance });
-                    ecb.AddComponent(service, owner);
                     ecb.AppendToBuffer(btInstance, new BTServiceElement
                     {
                         Service = service,
