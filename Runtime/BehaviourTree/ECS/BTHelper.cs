@@ -43,7 +43,7 @@ namespace SD.ECSBT.BehaviourTree.ECS
                 NodeId = nodeData.Id,
                 BTOwner = owner
             });
-            
+            ecb.AddComponent(action, nodeData.NodeComponentType);
             ecb.AddComponent(btInstance, new BTActiveNodeLink { ActiveNode = action });
 
             return action;

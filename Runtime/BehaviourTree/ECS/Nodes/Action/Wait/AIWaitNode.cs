@@ -23,7 +23,7 @@ namespace SD.ECSBT.BehaviourTree.ECS.Nodes.Action.Wait
         {
             var action = BTHelper.CreateAction(ref ecb, "AIWaitAction", btInstance, owner, node);
             
-            ecb.AddComponent(action, new AIWaitNode
+            ecb.SetComponent(action, new AIWaitNode
             {
                 LeftTime = node.FloatVars["Time"]
             });

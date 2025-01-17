@@ -2,6 +2,7 @@ using SD.ECSBT.BehaviourTree.Data;
 using SD.ECSBT.BehaviourTree.ECS.Blackboard;
 using SD.ECSBT.BehaviourTree.ECS.Components;
 using SD.ECSBT.BehaviourTree.ECS.Instance;
+using SD.ECSBT.BehaviourTree.ECS.Nodes;
 using SD.ECSBT.BehaviourTree.ECS.Nodes.Data;
 using SD.ECSBT.BehaviourTree.ECS.Services;
 using Unity.Burst;
@@ -91,6 +92,12 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
                     var service = ecb.CreateEntity();
                     ecb.SetName(service, "BTService");
                     ecb.AddComponent(service, node.NodeComponentType);
+                    ecb.AddComponent(service, new NodeInstanceData
+                    {
+                        BTInstance = btInstance,
+                        BTOwner = owner.Value,
+                        NodeId = node.Id
+                    });
                     ecb.AddComponent<BTServiceEnabled>(service);
                     ecb.SetComponentEnabled<BTServiceEnabled>(service, false);
                     ecb.AddComponent<BTServiceTag>(service);
