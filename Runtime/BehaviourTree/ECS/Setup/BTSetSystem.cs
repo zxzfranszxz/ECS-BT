@@ -118,7 +118,7 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
                 foreach (var node in btData.Nodes)
                 {
                     if (node.NodeType != NodeType.Decorator) continue;
-                    if (!node.IntVars.ContainsKey("AbortType")) continue;
+                    if (!node.IntVars.IsCreated || !node.IntVars.ContainsKey("AbortType")) continue;
                     var abortType = (AbortType)node.IntVars["AbortType"];
                     node.IntVars.TryGetValue("NotifyType", out var notifyTypeInt);
                     var notifyType = (NotifyType)notifyTypeInt;
