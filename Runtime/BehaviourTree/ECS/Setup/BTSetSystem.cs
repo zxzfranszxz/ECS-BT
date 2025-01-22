@@ -63,7 +63,6 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
                 });
                 ecb.AddComponent<BTLogicEnabled>(btInstance);
                 ecb.AddComponent(btInstance, owner);
-                ecb.AddComponent(btInstance, new AIControllerLink { Controller = aiController });
                 
                 aiControllerData.BTInstance = btInstance;
                 ecb.SetComponent(aiController, aiControllerData);
