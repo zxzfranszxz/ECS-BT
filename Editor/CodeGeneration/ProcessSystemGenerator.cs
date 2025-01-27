@@ -27,6 +27,7 @@ using SD.ECSBT.BehaviourTree.ECS.Services;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
+using Random = Unity.Mathematics.Random;
 
 namespace {1}
 {{
@@ -34,9 +35,11 @@ namespace {1}
     [UpdateAfter(typeof(BTAbortSystem))]
     public partial struct {2} : ISystem
     {{
-        [BurstCompile]
+        public Random random;
+
         public void OnCreate(ref SystemState state)
         {{
+            random = new Random((uint) UnityEngine.Random.Range(uint.MinValue, uint.MaxValue));
         }}
 
         [BurstCompile]
