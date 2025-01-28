@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using SD.ECSBT.BehaviourTree.Nodes;
 using SD.ECSBT.BehaviourTree.Nodes.Attributes;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 using UnityEngine;
 
 namespace SD.ECSBT.BehaviourTree
@@ -15,7 +17,7 @@ namespace SD.ECSBT.BehaviourTree
         public BlackboardDataForSo blackboard;
         
         public NodeDataDto RootNode => nodes.FirstOrDefault(dto => typeof(IRootNode).IsAssignableFrom(dto.Type));
-
+#if UNITY_EDITOR
         public NodeDataDto CreateNode(Type nodeType)
         {
             var nodeName = nodeType.Name;
@@ -62,5 +64,6 @@ namespace SD.ECSBT.BehaviourTree
             nodes.First(node => node.guid == child.guid).parentGuid = string.Empty;
             parent.childrenGuids.Remove(child.guid);
         }
+#endif
     }
 }
