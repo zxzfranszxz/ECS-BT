@@ -163,7 +163,7 @@ namespace Editor.SD.ECSBT.UIBuilder.Common
                     var floatField = new FloatField
                     {
                         style = { flexGrow = 1 },
-                        value = float.Parse(GetNodeVarValue(attribute.Id))
+                        value = float.Parse(GetNodeVarValue(attribute.Id), NumberStyles.Float, CultureInfo.InvariantCulture)
                     };
                     floatField.RegisterValueChangedCallback(evt =>
                         SetNodeVarValue(attribute.Id, evt.newValue.ToString(CultureInfo.InvariantCulture),

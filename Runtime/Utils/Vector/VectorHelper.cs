@@ -1,3 +1,4 @@
+using System.Globalization;
 using UnityEngine;
 
 namespace Utils.Vector
@@ -11,8 +12,8 @@ namespace Utils.Vector
             value = value.Trim('(', ')');
             var parts = value.Split(',');
             if (parts.Length == 2 &&
-                float.TryParse(parts[0], out var x) &&
-                float.TryParse(parts[1], out var y))
+                float.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out var x) &&
+                float.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var y))
             {
                 result = new Vector2(x, y);
                 return true;
@@ -26,9 +27,9 @@ namespace Utils.Vector
             value = value.Trim('(', ')');
             var parts = value.Split(',');
             if (parts.Length == 3 &&
-                float.TryParse(parts[0], out var x) &&
-                float.TryParse(parts[1], out var y) &&
-                float.TryParse(parts[2], out var z))
+                float.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out var x) &&
+                float.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var y) &&
+                float.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out var z))
             {
                 result = new Vector3(x, y, z);
                 return true;

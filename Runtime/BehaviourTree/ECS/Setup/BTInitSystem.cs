@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using SD.ECSBT.BehaviourTree.Data;
 using SD.ECSBT.BehaviourTree.ECS.Components;
@@ -144,7 +145,7 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
                 nodeData.FloatVars = new NativeHashMap<FixedString32Bytes, float>(vars.Count, Allocator.Persistent);
                 foreach (var btVar in vars)
                 {
-                    nodeData.FloatVars.Add(btVar.id, float.Parse(btVar.value));
+                    nodeData.FloatVars.Add(btVar.id, float.Parse(btVar.value, NumberStyles.Float, CultureInfo.InvariantCulture));
                 }
             }
             
