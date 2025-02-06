@@ -16,14 +16,13 @@ namespace SD.ECSBT.BehaviourTree.ECS.Process
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
-            
         }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             var entityManager = state.EntityManager;
-            
+
             var ecb = new EntityCommandBuffer(Allocator.Temp);
             foreach (var (commandRO, entity) in SystemAPI.Query<RefRO<NotifyBlackboardVarCommand>>().WithEntityAccess())
             {
@@ -31,6 +30,7 @@ namespace SD.ECSBT.BehaviourTree.ECS.Process
 
                 ref readonly var command = ref commandRO.ValueRO;
                 var btInstance = command.BTInstance;
+                if (!SystemAPI.Exists(btInstance)) continue;
                 var subscribers = SystemAPI.GetBuffer<AbortSubscriberElement>(btInstance);
                 ref var btInstanceData = ref SystemAPI.GetComponentRW<BTInstanceData>(btInstance).ValueRW;
                 ref readonly var btData = ref SystemAPI.GetComponentRO<BTData>(btInstanceData.BehaviorTree).ValueRO;
@@ -38,21 +38,22 @@ namespace SD.ECSBT.BehaviourTree.ECS.Process
                 var interrupterNode = -1;
                 foreach (var subscriber in subscribers)
                 {
-                    if(command.BlackboardId != subscriber.BlackboardId) continue;
-                    if(subscriber.NodeId >= btInstanceData.ActiveNodeId) continue;
-                    if(subscriber.NotifyType != command.NotifyType) continue;
-                    var relationAbortType = GetNodeType(subscriber.NodeId, btInstanceData.ActiveNodeId, in btData.Nodes);
-                    if((subscriber.AbortType & relationAbortType) == AbortType.None) continue;
-                    if(interrupterNode > subscriber.NodeId) continue;
+                    if (command.BlackboardId != subscriber.BlackboardId) continue;
+                    if (subscriber.NodeId >= btInstanceData.ActiveNodeId) continue;
+                    if (subscriber.NotifyType != command.NotifyType) continue;
+                    var relationAbortType =
+                        GetNodeType(subscriber.NodeId, btInstanceData.ActiveNodeId, in btData.Nodes);
+                    if ((subscriber.AbortType & relationAbortType) == AbortType.None) continue;
+                    if (interrupterNode > subscriber.NodeId) continue;
                     interrupterNode = subscriber.NodeId;
                 }
-                
-                if(interrupterNode < 0) continue;
+
+                if (interrupterNode < 0) continue;
                 btInstanceData.ActiveNodeId = interrupterNode;
                 btInstanceData.PreviousNodeId = -1;
                 btInstanceData.RunState = BTRunState.Digging;
                 btInstanceData.ActiveNodeState = ActiveNodeState.None;
-                
+
                 // stop services below new node
                 BTServiceHelper.DeactivateServicesBelowNode(ref entityManager, in interrupterNode, in btInstance);
 
@@ -63,6 +64,7 @@ namespace SD.ECSBT.BehaviourTree.ECS.Process
                     ecb.RemoveComponent<BTActiveNodeLink>(btInstance);
                 }
             }
+
             ecb.Playback(state.EntityManager);
             ecb.Dispose();
         }
@@ -79,9 +81,10 @@ namespace SD.ECSBT.BehaviourTree.ECS.Process
                     abortType = AbortType.Self;
                     break;
                 }
-                
+
                 parentId = btDataNodes[parentId].ParentId;
             }
+
             return abortType;
         }
 
