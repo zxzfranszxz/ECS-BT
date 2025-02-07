@@ -54,6 +54,7 @@ namespace {1}
             {{
                 ref var btInstanceData = ref btInstanceRW.ValueRW;
                 ref var blackboardData = ref blackboardDataRW.ValueRW;
+                if (!SystemAPI.HasComponent<BTData>(btInstanceData.BehaviorTree)) continue;
                 ref readonly var btData = ref SystemAPI.GetComponentRO<BTData>(btInstanceData.BehaviorTree).ValueRO;
                 var owner = ownerRO.ValueRO.Value;
 
