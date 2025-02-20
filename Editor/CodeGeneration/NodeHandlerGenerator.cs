@@ -24,7 +24,7 @@ namespace Editor.SD.ECSBT.CodeGeneration
             var settingsPath = AssetDatabase.GUIDToAssetPath(settingsDataGuid);
             var settings = AssetDatabase.LoadAssetAtPath<BTSettingsData>(settingsPath);
 
-            var nodeHandleMethods = TypeCache.GetMethodsWithAttribute<NodeHandlerAttribute>();
+            var nodeHandleMethods = TypeCache.GetMethodsWithAttribute<NodeHandlerAttribute>().OrderBy(m => m.Name.GetHashCode()).ToList();
 
             var namespaces = new HashSet<string>();
             foreach (var nodeHandleMethod in nodeHandleMethods)
