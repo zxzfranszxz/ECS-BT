@@ -32,6 +32,51 @@ namespace Editor.SD.ECSBT.UIBuilder.BehaviourTree
             var styleSheet =
                 AssetDatabase.LoadAssetAtPath<StyleSheet>("Packages/com.snakydevelop.ecsbt/UIBuilder/BehaviourTree/BehaviourTreeEditor.uss");
             styleSheets.Add(styleSheet);
+            
+            RegisterCallback<KeyDownEvent>(OnKeyDown);
+        }
+
+        private void OnKeyDown(KeyDownEvent evt)
+        {
+            if (evt.commandKey || evt.ctrlKey)
+            {
+                if (evt.keyCode == KeyCode.C)
+                {
+                    CopySelection();
+                }
+                else if (evt.keyCode == KeyCode.V)
+                {
+                    PasteSelection();
+                }
+            }
+        }
+        
+        private List<NodeView> _copiedNodes = new();
+
+        private void CopySelection()
+        {
+            _copiedNodes = selection.OfType<NodeView>().ToList();
+        }
+
+        private void PasteSelection()
+        {
+            if (_copiedNodes.Count == 0) return;
+
+            var newNodes = new List<NodeView>();
+
+            foreach (var node in _copiedNodes)
+            {
+                var nodeDto = node.Node.Clone();
+                _tree.nodes.Add(nodeDto);
+                nodeDto.position = node.GetPosition().position + Vector2.one * 20;
+                var newNode = CreateNodeView(nodeDto);
+                newNodes.Add(newNode);
+            }
+
+            _copiedNodes = newNodes;
+            
+            EditorUtility.SetDirty(_tree);
+            AssetDatabase.SaveAssets();
         }
 
         public void PopulateView(BehaviourTreeSO tree)
@@ -51,7 +96,10 @@ namespace Editor.SD.ECSBT.UIBuilder.BehaviourTree
             }
             
             // create node view
-            _tree.nodes.ForEach(CreateNodeView);
+            _tree.nodes.ForEach(dto=>
+            {
+                CreateNodeView(dto);
+            });
             
             // create edges
             _tree.nodes.ForEach(parentNode =>
@@ -142,13 +190,14 @@ namespace Editor.SD.ECSBT.UIBuilder.BehaviourTree
             AssetDatabase.SaveAssets();
         }
 
-        private void CreateNodeView(NodeDataDto node)
+        private NodeView CreateNodeView(NodeDataDto node)
         {
             var nodeView = new NodeView(node)
             {
                 OnNodeSelected = OnNodeSelected
             };
             AddElement(nodeView);
+            return nodeView;
         }
     }
 }

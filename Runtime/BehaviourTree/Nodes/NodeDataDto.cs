@@ -28,5 +28,21 @@ namespace SD.ECSBT.BehaviourTree.Nodes
         public Guid Guid => Guid.Parse(guid);
 
         public Guid ParentGuid => Guid.TryParse(parentGuid, out var pGuid) ? pGuid : Guid.Empty;
+
+        public NodeDataDto Clone()
+        {
+            return new NodeDataDto
+            {
+                name = name,
+                description = description,
+                typeReference = typeReference,
+                guid = Guid.NewGuid().ToString(),
+                parentGuid = null,
+                childrenGuids = new List<string>(),
+                vars = vars.ConvertAll(v => v.Clone()),
+                blackboardVars = blackboardVars.ConvertAll(bv => bv.Clone()),
+                position = position
+            };
+        }
     }
 }

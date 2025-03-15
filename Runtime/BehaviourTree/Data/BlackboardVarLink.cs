@@ -7,5 +7,10 @@ namespace SD.ECSBT.BehaviourTree.Data
     {
         public string id;
         public string varId;
+
+        public BlackboardVarLink Clone()
+        {
+            return (BlackboardVarLink)MemberwiseClone();
+        }
     }
 }

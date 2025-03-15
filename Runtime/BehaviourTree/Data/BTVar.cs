@@ -28,5 +28,10 @@ namespace SD.ECSBT.BehaviourTree.Data
             yield return typeof(NotifyType);
             yield return typeof(BlackboardConditionType);
         }
+
+        public BTVar Clone()
+        {
+            return (BTVar)MemberwiseClone();
+        }
     }
 }
