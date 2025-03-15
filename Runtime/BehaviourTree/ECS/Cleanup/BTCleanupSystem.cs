@@ -16,13 +16,11 @@ namespace SD.ECSBT.BehaviourTree.ECS.Cleanup
         {
             var ecb = new EntityCommandBuffer(Allocator.Temp);
             var entityManager = state.EntityManager;
-            foreach (var (aiControllerLink, entity) in SystemAPI.Query<RefRO<AIControllerLink>>()
+            foreach (var (aiControllerData, entity) in SystemAPI.Query<RefRO<AIControllerData>>()
                          .WithNone<AIControllerCleanupTag>().WithEntityAccess())
             {
-                ecb.RemoveComponent<AIControllerLink>(entity);
-                if (!SystemAPI.Exists(aiControllerLink.ValueRO.Controller)) continue;
-                var btInstance = SystemAPI.GetComponentRO<AIControllerData>(aiControllerLink.ValueRO.Controller).ValueRO
-                    .BTInstance;
+                ecb.RemoveComponent<AIControllerData>(entity);
+                var btInstance = aiControllerData.ValueRO.BTInstance;
                 BTHelper.CleanupBTInstance(ref entityManager, ref ecb, btInstance);
             }
 

@@ -32,10 +32,11 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
             foreach (var (command, entity) in SystemAPI.Query<RefRO<BTSetCommand>>().WithEntityAccess())
             {
                 ecb.DestroyEntity(entity);
-                var aiController = SystemAPI.GetComponent<AIControllerLink>(command.ValueRO.Target).Controller;
-                var aiControllerData = SystemAPI.GetComponentRO<AIControllerData>(aiController).ValueRO;
-                var owner = SystemAPI.GetComponent<BTOwner>(aiController);
                 
+                var owner = command.ValueRO.Target;
+                if(!SystemAPI.Exists(owner)) continue;
+                var aiControllerData = SystemAPI.GetComponent<AIControllerData>(command.ValueRO.Target);
+                var btOwner = new BTOwner { Value = owner };
                 
                 // clean up old one
                 var oldBTInstance = aiControllerData.BTInstance;
@@ -62,15 +63,15 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
                     ActiveNodeState = ActiveNodeState.None
                 });
                 ecb.AddComponent<BTLogicEnabled>(btInstance);
-                ecb.AddComponent(btInstance, owner);
+                ecb.AddComponent(btInstance, btOwner);
                 
                 aiControllerData.BTInstance = btInstance;
-                ecb.SetComponent(aiController, aiControllerData);
+                ecb.AddComponent(owner, aiControllerData);
 
                 ref readonly var btData = ref SystemAPI.GetComponentRO<BTData>(btEntity).ValueRO;
 
                 // create Blackboard
-                var blackboardData = new Blackboard.BlackboardData
+                var blackboardData = new BlackboardData
                 {
                     BoolVars = new NativeHashMap<FixedString32Bytes, bool>(0, Allocator.Persistent),
                     IntVars = new NativeHashMap<FixedString32Bytes, int>(0, Allocator.Persistent),
@@ -94,7 +95,7 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
                     ecb.AddComponent(service, new NodeInstanceData
                     {
                         BTInstance = btInstance,
-                        BTOwner = owner.Value,
+                        BTOwner = owner,
                         NodeId = node.Id
                     });
                     ecb.AddComponent<BTServiceEnabled>(service);
