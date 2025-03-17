@@ -27,6 +27,7 @@ namespace SD.ECSBT.BehaviourTree.Data
             yield return typeof(AbortType);
             yield return typeof(NotifyType);
             yield return typeof(BlackboardConditionType);
+            yield return typeof(Enum);
         }
 
         public BTVar Clone()

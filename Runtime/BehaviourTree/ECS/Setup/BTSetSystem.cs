@@ -45,7 +45,7 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
 
                 var btName = command.ValueRO.BTName;
                 if (btName.IsEmpty)
-                    btName = "DefaultBT";
+                    btName = "BTDefault";
 
                 BTHelper.GetBTree(btElements, btName, out var btEntity);
                 if (btEntity == Entity.Null)

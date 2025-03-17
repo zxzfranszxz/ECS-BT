@@ -116,6 +116,8 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
 
         private static void InitNodeVars(ref NodeData nodeData, ref NodeDataDto nodeDataDto)
         {
+            var supportedTypes = BTVar.SupportedTypes().ToList();
+            
             // bool
             var vars = nodeDataDto.vars.Where(var => var.Type == typeof(bool)).ToList();
             if(vars.Any())
@@ -124,6 +126,17 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
                 foreach (var btVar in vars)
                 {
                     nodeData.BoolVars.Add(btVar.id, bool.Parse(btVar.value));
+                }
+            }
+            
+            // unsupported enums int
+            vars = nodeDataDto.vars.Where(var => var.Type.IsEnum && !supportedTypes.Contains(var.Type)).ToList();
+            if(vars.Any())
+            {
+                nodeData.IntVars = new NativeHashMap<FixedString32Bytes, int>(vars.Count, Allocator.Persistent);
+                foreach (var btVar in vars)
+                {
+                    nodeData.IntVars.Add(btVar.id, (int)Enum.Parse(btVar.Type, btVar.value));
                 }
             }
             
