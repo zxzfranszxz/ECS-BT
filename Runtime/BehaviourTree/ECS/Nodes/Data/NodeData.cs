@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -14,6 +15,7 @@ namespace SD.ECSBT.BehaviourTree.ECS.Nodes.Data
         public int Id;
         public int ParentId;
         public NativeArray<int> Children;
+        public bool IsAutoReturn;
         
         // vars
         public NativeHashMap<FixedString32Bytes, bool> BoolVars;
@@ -22,5 +24,11 @@ namespace SD.ECSBT.BehaviourTree.ECS.Nodes.Data
         public NativeHashMap<FixedString32Bytes, float2> Float2Vars;
         public NativeHashMap<FixedString32Bytes, float3> Float3Vars;
         public NativeHashMap<FixedString32Bytes, FixedString32Bytes> StringVars;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public FixedString32Bytes GetBlackboardId(FixedString32Bytes key)
+        {
+            return StringVars[key];
+        }
     }
 }

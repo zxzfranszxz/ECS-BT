@@ -25,9 +25,15 @@ namespace Editor.SD.ECSBT.CodeGeneration
             var settings = AssetDatabase.LoadAssetAtPath<BTSettingsData>(settingsPath);
 
             var nodeHandleMethods = TypeCache.GetMethodsWithAttribute<NodeHandlerAttribute>().OrderBy(m => m.Name.GetHashCode()).ToList();
+            var nodeReturnHandleMethods = TypeCache.GetMethodsWithAttribute<NodeReturnHandlerAttribute>().OrderBy(m => m.Name.GetHashCode()).ToList();
 
             var namespaces = new HashSet<string>();
             foreach (var nodeHandleMethod in nodeHandleMethods)
+            {
+                if (nodeHandleMethod.DeclaringType == null) continue;
+                namespaces.Add(nodeHandleMethod.DeclaringType.Namespace);
+            }
+            foreach (var nodeHandleMethod in nodeReturnHandleMethods)
             {
                 if (nodeHandleMethod.DeclaringType == null) continue;
                 namespaces.Add(nodeHandleMethod.DeclaringType.Namespace);
@@ -41,11 +47,11 @@ namespace Editor.SD.ECSBT.CodeGeneration
                 sb.AppendLine($"using {nse};");
             }
             
-            sb.AppendFormat(StartPart, settings.nodeHandlerNamespace, settings.nodeHandlerClassName);
+            sb.AppendFormat(START_PART, settings.nodeHandlerNamespace, settings.nodeHandlerClassName);
 
             var packageAssembly = typeof(AIRootNode).Assembly;
             
-            // switch part
+            // run switch part
             foreach (var nodeHandleMethod in nodeHandleMethods)
             {
                 if(nodeHandleMethod.Name.Contains("$BurstManaged")) continue;
@@ -61,7 +67,23 @@ namespace Editor.SD.ECSBT.CodeGeneration
                     break;");
             }
             
-            sb.Append(EndPart);
+            sb.Append(MID_PART);
+            
+            // return switch part
+            foreach (var nodeHandleMethod in nodeReturnHandleMethods)
+            {
+                if(nodeHandleMethod.Name.Contains("$BurstManaged")) continue;
+                var typeHash = nodeHandleMethod.GetCustomAttribute<NodeReturnHandlerAttribute>().StableTypeHash;
+                
+                sb.Append($@"
+                case {typeHash}:
+                    {nodeHandleMethod.DeclaringType!.Name}.{nodeHandleMethod.Name}(
+                        ref systemState, ref ecb, ref btInstanceData, ref blackboardData,
+                        in btData, in owner, in btInstance, in node);
+                    break;");
+            }
+            
+            sb.Append(END_PART);
             
             System.IO.File.WriteAllText(
                 $"{settings.nodeHandlerClassPath}/{settings.nodeHandlerClassName}.generated.cs", sb.ToString());
@@ -69,7 +91,7 @@ namespace Editor.SD.ECSBT.CodeGeneration
         }
 
 
-        private const string StartPart = 
+        private const string START_PART = 
 @"using SD.ECSBT.BehaviourTree.ECS.Blackboard;
 using SD.ECSBT.BehaviourTree.ECS.Components;
 using SD.ECSBT.BehaviourTree.ECS.Instance;
@@ -108,13 +130,42 @@ namespace {0}
 
             switch (node.StableTypeHash)
             {{";
-
-        private const string EndPart = @"
+        
+        private const string MID_PART = @"
             }
 
             if (activeNodeState != ActiveNodeState.None) return;
             Debug.LogError($""Node {nodeType.ToFixedString()} is not implemented."");
             activeNodeState = ActiveNodeState.Success;
+        }
+
+        [BurstCompile]
+        public static void ReturnNode(ref SystemState systemState, ref EntityCommandBuffer ecb,
+            ref BTInstanceData btInstanceData, ref BlackboardData blackboardData, in BTData btData, in Entity owner, 
+            in Entity btInstance, in int nodeId = -1)
+        {
+            var id = nodeId >= 0 ? nodeId : btInstanceData.ActiveNodeId;
+            var node = btData.Nodes[id];
+            var nodeType = node.NodeComponentType;
+
+            var entityManager = systemState.EntityManager;
+            if(node.NodeType is NodeType.Service)
+            {
+                BTServiceHelper.SetActiveService(ref entityManager, in node.Id, in btInstance, false);
+                return;
+            }
+
+            if(node.NodeType is NodeType.Decorator)
+            {
+                return;
+            }
+
+            switch (node.StableTypeHash)
+            {";
+
+        private const string END_PART = @"
+                
+            }
         }
     }
 }";

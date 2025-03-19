@@ -39,6 +39,9 @@ namespace {1}
 
         public void OnCreate(ref SystemState state)
         {{
+            state.EntityManager.CreateSingleton<BTDelegateData>();
+            var btDelegateData = SystemAPI.GetSingletonRW<BTDelegateData>();
+            btDelegateData.ValueRW.BTNodeReturnHandlerFunc = BurstCompiler.CompileFunctionPointer<BTHelper.BTNodeReturnHandlerDelegate>(BTNodeRunHandler.ReturnNode);
             random = new Random((uint) UnityEngine.Random.Range(uint.MinValue, uint.MaxValue));
         }}
 
@@ -48,8 +51,8 @@ namespace {1}
             var ecb = new EntityCommandBuffer(Allocator.Temp);
             var entityManager = state.EntityManager;
 
-            foreach (var (btInstanceRW, blackboardDataRW, ownerRO, entity) in SystemAPI
-                         .Query<RefRW<BTInstanceData>, RefRW<BlackboardData>, RefRO<BTOwner>>()
+            foreach (var (btInstanceRW, blackboardDataRW, ownerRO, autoReturnNodeElements, entity) in SystemAPI
+                         .Query<RefRW<BTInstanceData>, RefRW<BlackboardData>, RefRO<BTOwner>, DynamicBuffer<BTActiveAutoReturnNodeElement>>()
                          .WithAll<BTLogicEnabled>().WithEntityAccess())
             {{
                 ref var btInstanceData = ref btInstanceRW.ValueRW;
@@ -74,17 +77,12 @@ namespace {1}
                             SystemAPI.SetComponentEnabled<BTLogicEnabled>(entity, false);
                             break;
                         }}
-                        BTNodeResultHandler.ReturnNodeResult(ref btInstanceData, in btData);
+                        BTNodeResultHandler.ReturnNodeResult(ref btInstanceData, in btData, autoReturnNodeElements);
                     }}
                     else if (btInstanceData.RunState == BTRunState.Returning)
                     {{
-                        if (btData.Nodes[btInstanceData.ActiveNodeId].NodeType == NodeType.Service)
-                        {{
-                            BTServiceHelper.SetActiveService(ref entityManager, btInstanceData.ActiveNodeId, entity,
-                                false);
-                        }}
-
-                        BTNodeResultHandler.ReturnNodeResult(ref btInstanceData, in btData);
+                        {3}.ReturnNode(ref state, ref this, ref ecb, ref btInstanceData, ref blackboardData, in btData, in owner, in entity);
+                        BTNodeResultHandler.ReturnNodeResult(ref btInstanceData, in btData, autoReturnNodeElements);
                     }}
                     else
                     {{

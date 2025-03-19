@@ -5,6 +5,7 @@ using System.Linq;
 using SD.ECSBT.BehaviourTree.Data;
 using SD.ECSBT.BehaviourTree.ECS.Components;
 using SD.ECSBT.BehaviourTree.ECS.Nodes.Data;
+using SD.ECSBT.BehaviourTree.ECS.Nodes.Decorator;
 using SD.ECSBT.BehaviourTree.Nodes;
 using Unity.Burst;
 using Unity.Collections;
@@ -69,6 +70,7 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
                 StableTypeHash = TypeManager.GetTypeInfo(TypeManager.GetTypeIndex(nodeDataDto.Type)).StableTypeHash,
                 NodeComponentType = ComponentType.ReadWrite(nodeDataDto.Type),
                 NodeType = BTHelper.GetNodeType(nodeDataDto.Type),
+                IsAutoReturn = typeof(IAIAutoReturnNode).IsAssignableFrom(nodeDataDto.Type),
                 Guid = nodeDataDto.Guid
             };
             
@@ -133,7 +135,8 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
             vars = nodeDataDto.vars.Where(var => var.Type.IsEnum && !supportedTypes.Contains(var.Type)).ToList();
             if(vars.Any())
             {
-                nodeData.IntVars = new NativeHashMap<FixedString32Bytes, int>(vars.Count, Allocator.Persistent);
+                if(nodeData.IntVars.IsCreated == false)
+                    nodeData.IntVars = new NativeHashMap<FixedString32Bytes, int>(vars.Count, Allocator.Persistent);
                 foreach (var btVar in vars)
                 {
                     nodeData.IntVars.Add(btVar.id, (int)Enum.Parse(btVar.Type, btVar.value));
@@ -144,7 +147,8 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
             vars = nodeDataDto.vars.Where(var => var.Type == typeof(int)).ToList();
             if(vars.Any())
             {
-                nodeData.IntVars = new NativeHashMap<FixedString32Bytes, int>(vars.Count, Allocator.Persistent);
+                if(nodeData.IntVars.IsCreated == false)
+                    nodeData.IntVars = new NativeHashMap<FixedString32Bytes, int>(vars.Count, Allocator.Persistent);
                 foreach (var btVar in vars)
                 {
                     nodeData.IntVars.Add(btVar.id, int.Parse(btVar.value));

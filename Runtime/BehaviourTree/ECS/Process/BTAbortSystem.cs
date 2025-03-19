@@ -3,6 +3,7 @@ using SD.ECSBT.BehaviourTree.ECS.Blackboard;
 using SD.ECSBT.BehaviourTree.ECS.Components;
 using SD.ECSBT.BehaviourTree.ECS.Instance;
 using SD.ECSBT.BehaviourTree.ECS.Nodes.Data;
+using SD.ECSBT.BehaviourTree.ECS.Nodes.Decorator;
 using SD.ECSBT.BehaviourTree.ECS.Services;
 using Unity.Burst;
 using Unity.Collections;
@@ -16,11 +17,13 @@ namespace SD.ECSBT.BehaviourTree.ECS.Process
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
+            state.RequireForUpdate<BTDelegateData>();
         }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
+            var btDelegateData = SystemAPI.GetSingleton<BTDelegateData>();
             var entityManager = state.EntityManager;
 
             var ecb = new EntityCommandBuffer(Allocator.Temp);
@@ -33,6 +36,8 @@ namespace SD.ECSBT.BehaviourTree.ECS.Process
                 if (!SystemAPI.Exists(btInstance)) continue;
                 var subscribers = SystemAPI.GetBuffer<AbortSubscriberElement>(btInstance);
                 ref var btInstanceData = ref SystemAPI.GetComponentRW<BTInstanceData>(btInstance).ValueRW;
+                ref var blackboard = ref SystemAPI.GetComponentRW<BlackboardData>(btInstance).ValueRW;
+                var owner = SystemAPI.GetComponent<BTOwner>(btInstance).Value;
                 ref readonly var btData = ref SystemAPI.GetComponentRO<BTData>(btInstanceData.BehaviorTree).ValueRO;
 
                 var interrupterNode = -1;
@@ -53,6 +58,19 @@ namespace SD.ECSBT.BehaviourTree.ECS.Process
                 btInstanceData.PreviousNodeId = -1;
                 btInstanceData.RunState = BTRunState.Digging;
                 btInstanceData.ActiveNodeState = ActiveNodeState.None;
+
+                // release active AutoReturn nodes below new node
+                var autoReturnNodes = entityManager.GetBuffer<BTActiveAutoReturnNodeElement>(btInstance);
+
+                for (var i = 0; i < autoReturnNodes.Length; i++)
+                {
+                    var element = autoReturnNodes[i];
+                    if (btInstanceData.ActiveNodeId > element.NodeId) continue;
+                    btDelegateData.BTNodeReturnHandlerFunc.Invoke(ref state, ref ecb, ref btInstanceData,
+                        ref blackboard, btData, owner, btInstance, element.NodeId);
+                    autoReturnNodes.RemoveAt(i);
+                    i--;
+                }
 
                 // stop services below new node
                 BTServiceHelper.DeactivateServicesBelowNode(ref entityManager, in interrupterNode, in btInstance);

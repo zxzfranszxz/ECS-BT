@@ -12,4 +12,14 @@ namespace SD.ECSBT.BehaviourTree.Nodes.Attributes
             StableTypeHash = TypeManager.GetTypeInfo(TypeManager.GetTypeIndex(handlerType)).StableTypeHash;
         }
     }
+    
+    public class NodeReturnHandlerAttribute : Attribute
+    {
+        public readonly ulong StableTypeHash;
+        
+        public NodeReturnHandlerAttribute(Type handlerType)
+        {
+            StableTypeHash = TypeManager.GetTypeInfo(TypeManager.GetTypeIndex(handlerType)).StableTypeHash;
+        }
+    }
 }

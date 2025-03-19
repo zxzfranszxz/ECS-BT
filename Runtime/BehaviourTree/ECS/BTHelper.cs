@@ -1,9 +1,12 @@
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using SD.ECSBT.BehaviourTree.ECS.Blackboard;
 using SD.ECSBT.BehaviourTree.ECS.Components;
 using SD.ECSBT.BehaviourTree.ECS.Instance;
 using SD.ECSBT.BehaviourTree.ECS.Nodes;
 using SD.ECSBT.BehaviourTree.ECS.Nodes.Data;
+using SD.ECSBT.BehaviourTree.ECS.Nodes.Decorator;
 using SD.ECSBT.BehaviourTree.ECS.Services;
 using SD.ECSBT.BehaviourTree.Nodes;
 using Unity.Burst;
@@ -16,6 +19,11 @@ namespace SD.ECSBT.BehaviourTree.ECS
     [BurstCompile]
     public static class BTHelper
     {
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void BTNodeReturnHandlerDelegate(ref SystemState systemState, ref EntityCommandBuffer ecb,
+            ref BTInstanceData btInstanceData, ref BlackboardData blackboardData, in BTData btData, in Entity owner,
+            in Entity btInstance, in int nodeId);
+
         public static NodeType GetNodeType(Type type)
         {
             if (typeof(IRootNode).IsAssignableFrom(type))
@@ -70,12 +78,13 @@ namespace SD.ECSBT.BehaviourTree.ECS
         }
 
         [BurstCompile]
-        public static void CleanupBTInstance(ref EntityManager entityManager, ref EntityCommandBuffer ecb,
-            in Entity btInstance)
+        public static void CleanupBTInstance(ref SystemState state, ref EntityManager entityManager,
+            ref EntityCommandBuffer ecb, ref BTInstanceData btInstanceData, ref BlackboardData blackboardData,
+            in BTData btData, in Entity owner,
+            in Entity btInstance, in BTDelegateData btDelegateData)
         {
             // clean up
             // clean Blackboard
-            var blackboardData = entityManager.GetComponentData<Blackboard.BlackboardData>(btInstance);
             blackboardData.BoolVars.Dispose();
             blackboardData.IntVars.Dispose();
             blackboardData.FloatVars.Dispose();
@@ -84,6 +93,15 @@ namespace SD.ECSBT.BehaviourTree.ECS
             blackboardData.EntityVars.Dispose();
             blackboardData.QuaternionVars.Dispose();
             blackboardData.StringVars.Dispose();
+
+            // release active AutoReturn nodes
+            var autoReturnNodes = entityManager.GetBuffer<BTActiveAutoReturnNodeElement>(btInstance);
+
+            foreach (var element in autoReturnNodes)
+            {
+                btDelegateData.BTNodeReturnHandlerFunc.Invoke(ref state, ref ecb, ref btInstanceData, ref blackboardData, btData,
+                    owner, btInstance, element.NodeId);
+            }
 
             // delete services
             var serviceElements = entityManager.GetBuffer<BTServiceElement>(btInstance);

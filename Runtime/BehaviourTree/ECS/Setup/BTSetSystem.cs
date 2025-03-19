@@ -4,6 +4,7 @@ using SD.ECSBT.BehaviourTree.ECS.Components;
 using SD.ECSBT.BehaviourTree.ECS.Instance;
 using SD.ECSBT.BehaviourTree.ECS.Nodes;
 using SD.ECSBT.BehaviourTree.ECS.Nodes.Data;
+using SD.ECSBT.BehaviourTree.ECS.Nodes.Decorator;
 using SD.ECSBT.BehaviourTree.ECS.Services;
 using Unity.Burst;
 using Unity.Collections;
@@ -19,12 +20,14 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
+            state.RequireForUpdate<BTDelegateData>();
             state.RequireForUpdate<BTElement>();
         }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
+            var btDelegateData = SystemAPI.GetSingleton<BTDelegateData>();
             var btElements = SystemAPI.GetSingletonBuffer<BTElement>();
             var ecb = new EntityCommandBuffer(Allocator.Temp);
             var entityManager = state.EntityManager;
@@ -32,16 +35,22 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
             foreach (var (command, entity) in SystemAPI.Query<RefRO<BTSetCommand>>().WithEntityAccess())
             {
                 ecb.DestroyEntity(entity);
-                
+
                 var owner = command.ValueRO.Target;
-                if(!SystemAPI.Exists(owner)) continue;
+                if (!SystemAPI.Exists(owner)) continue;
                 var aiControllerData = SystemAPI.GetComponent<AIControllerData>(command.ValueRO.Target);
                 var btOwner = new BTOwner { Value = owner };
-                
+
                 // clean up old one
                 var oldBTInstance = aiControllerData.BTInstance;
-                if(SystemAPI.Exists(oldBTInstance))
-                    BTHelper.CleanupBTInstance(ref entityManager, ref ecb, oldBTInstance);
+                if (SystemAPI.Exists(oldBTInstance))
+                {
+                    ref var btInstanceData = ref SystemAPI.GetComponentRW<BTInstanceData>(oldBTInstance).ValueRW;
+                    ref var blackboard = ref SystemAPI.GetComponentRW<BlackboardData>(oldBTInstance).ValueRW;
+                    ref readonly var oldBTData = ref SystemAPI.GetComponentRO<BTData>(btInstanceData.BehaviorTree).ValueRO;
+                    BTHelper.CleanupBTInstance(ref state, ref entityManager, ref ecb, ref btInstanceData,
+                        ref blackboard, oldBTData, owner, oldBTInstance, btDelegateData);
+                }
 
                 var btName = command.ValueRO.BTName;
                 if (btName.IsEmpty)
@@ -64,7 +73,7 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
                 });
                 ecb.AddComponent<BTLogicEnabled>(btInstance);
                 ecb.AddComponent(btInstance, btOwner);
-                
+
                 aiControllerData.BTInstance = btInstance;
                 ecb.AddComponent(owner, aiControllerData);
 
@@ -83,6 +92,9 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
                     StringVars = new NativeHashMap<FixedString32Bytes, FixedString32Bytes>(0, Allocator.Persistent)
                 };
                 ecb.AddComponent(btInstance, blackboardData);
+
+                // add buffer for active AutoReturn nodes
+                ecb.AddBuffer<BTActiveAutoReturnNodeElement>(btInstance);
 
                 // create services
                 ecb.AddBuffer<BTServiceElement>(btInstance);
@@ -139,12 +151,17 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
         [BurstCompile]
         public void OnDestroy(ref SystemState state)
         {
+            var btDelegateData = SystemAPI.GetSingleton<BTDelegateData>();
             var ecb = new EntityCommandBuffer(Allocator.Temp);
             var entityManager = state.EntityManager;
-
-            foreach (var (_, entity) in SystemAPI.Query<RefRO<BTInstanceData>>().WithEntityAccess())
+            
+            foreach (var (btInstanceDataRW, blackboardDataRW, ownerRO, entity) in SystemAPI
+                         .Query<RefRW<BTInstanceData>, RefRW<BlackboardData>, RefRO<BTOwner>>()
+                         .WithEntityAccess())
             {
-                BTHelper.CleanupBTInstance(ref entityManager, ref ecb, entity);
+                ref readonly var btData = ref SystemAPI.GetComponentRO<BTData>(btInstanceDataRW.ValueRO.BehaviorTree).ValueRO;
+                BTHelper.CleanupBTInstance(ref state, ref entityManager, ref ecb, ref btInstanceDataRW.ValueRW,
+                    ref blackboardDataRW.ValueRW, btData, ownerRO.ValueRO.Value, entity, btDelegateData);
             }
 
             ecb.Dispose();

@@ -3,6 +3,7 @@ using SD.ECSBT.BehaviourTree.ECS.Components;
 using SD.ECSBT.BehaviourTree.ECS.Instance;
 using SD.ECSBT.BehaviourTree.ECS.Nodes.Composite;
 using SD.ECSBT.BehaviourTree.ECS.Nodes.Data;
+using SD.ECSBT.BehaviourTree.ECS.Nodes.Decorator;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -13,7 +14,7 @@ namespace SD.ECSBT.BehaviourTree.ECS.Process
     public static class BTNodeResultHandler
     {
         [BurstCompile]
-        public static void ReturnNodeResult(ref BTInstanceData btInstanceData, in BTData btData)
+        public static void ReturnNodeResult(ref BTInstanceData btInstanceData, in BTData btData, in DynamicBuffer<BTActiveAutoReturnNodeElement> autoReturnNods)
         {
             var node = btData.Nodes[btInstanceData.ActiveNodeId];
             if (btInstanceData.RunState == BTRunState.Digging)
@@ -23,6 +24,11 @@ namespace SD.ECSBT.BehaviourTree.ECS.Process
                     btInstanceData.PreviousNodeId = btInstanceData.ActiveNodeId;
                     btInstanceData.ActiveNodeId = node.Children[0];
                     btInstanceData.ActiveNodeState = ActiveNodeState.None;
+                    // add auto return nodes
+                    if (node.IsAutoReturn)
+                    {
+                        autoReturnNods.Add(new BTActiveAutoReturnNodeElement { NodeId = node.Id });
+                    }
                 }
                 else
                 {
@@ -74,6 +80,23 @@ namespace SD.ECSBT.BehaviourTree.ECS.Process
                 {
                     btInstanceData.PreviousNodeId = btInstanceData.ActiveNodeId;
                     btInstanceData.ActiveNodeId = node.ParentId;
+                    
+                    // add auto return nodes
+                    if (node.IsAutoReturn)
+                    {
+                        var index = -1;
+                        for (var i = 0; i < autoReturnNods.Length; i++)
+                        {
+                            if(autoReturnNods[i].NodeId != node.Id) continue;
+                            index = i;
+                            break;
+                        }
+
+                        if (index >= 0)
+                        {
+                            autoReturnNods.RemoveAt(index);
+                        }
+                    }
                 }
             }
             else
