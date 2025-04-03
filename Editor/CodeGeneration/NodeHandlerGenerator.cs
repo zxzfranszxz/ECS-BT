@@ -155,7 +155,7 @@ namespace {0}
                 return;
             }
 
-            if(node.NodeType is NodeType.Decorator)
+            if(node.NodeType is NodeType.Action)
             {
                 return;
             }

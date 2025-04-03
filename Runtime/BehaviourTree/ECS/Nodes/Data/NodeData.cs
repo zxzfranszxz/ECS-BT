@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -15,6 +16,7 @@ namespace SD.ECSBT.BehaviourTree.ECS.Nodes.Data
         public int Id;
         public int ParentId;
         public NativeArray<int> Children;
+        [MarshalAs(UnmanagedType.U1)]
         public bool IsAutoReturn;
         
         // vars

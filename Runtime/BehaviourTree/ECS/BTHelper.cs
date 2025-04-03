@@ -83,6 +83,15 @@ namespace SD.ECSBT.BehaviourTree.ECS
             in BTData btData, in Entity owner,
             in Entity btInstance, in BTDelegateData btDelegateData)
         {
+            // release active AutoReturn nodes
+            var autoReturnNodes = entityManager.GetBuffer<BTActiveAutoReturnNodeElement>(btInstance);
+
+            foreach (var element in autoReturnNodes)
+            {
+                btDelegateData.BTNodeReturnHandlerFunc.Invoke(ref state, ref ecb, ref btInstanceData, ref blackboardData, btData,
+                    owner, btInstance, element.NodeId);
+            }
+            
             // clean up
             // clean Blackboard
             blackboardData.BoolVars.Dispose();
@@ -93,15 +102,6 @@ namespace SD.ECSBT.BehaviourTree.ECS
             blackboardData.EntityVars.Dispose();
             blackboardData.QuaternionVars.Dispose();
             blackboardData.StringVars.Dispose();
-
-            // release active AutoReturn nodes
-            var autoReturnNodes = entityManager.GetBuffer<BTActiveAutoReturnNodeElement>(btInstance);
-
-            foreach (var element in autoReturnNodes)
-            {
-                btDelegateData.BTNodeReturnHandlerFunc.Invoke(ref state, ref ecb, ref btInstanceData, ref blackboardData, btData,
-                    owner, btInstance, element.NodeId);
-            }
 
             // delete services
             var serviceElements = entityManager.GetBuffer<BTServiceElement>(btInstance);
