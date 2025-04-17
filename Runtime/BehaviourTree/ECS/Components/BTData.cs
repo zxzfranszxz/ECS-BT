@@ -4,7 +4,7 @@ using Unity.Entities;
 
 namespace SD.ECSBT.BehaviourTree.ECS.Components
 {
-    public struct BTData : IComponentData
+    public struct BTData
     {
         public FixedString32Bytes BTName;
         public NativeArray<NodeData> Nodes;

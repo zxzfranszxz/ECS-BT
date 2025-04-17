@@ -1,3 +1,4 @@
+using SD.ECSBT.BehaviourTree.ECS.Blackboard;
 using SD.ECSBT.BehaviourTree.ECS.Components;
 using SD.ECSBT.BehaviourTree.ECS.Instance;
 using SD.ECSBT.BehaviourTree.ECS.Nodes.Data;
@@ -18,10 +19,9 @@ namespace SD.ECSBT.BehaviourTree.ECS.Nodes.Action.Wait
         [BurstCompile]
         [NodeHandler(typeof(AIWaitNode))]
         public static void Run(ref SystemState systemState, ref EntityCommandBuffer ecb, 
-            ref BTInstanceData btInstanceData, ref Blackboard.BlackboardData blackboardData, in BTData btData, in Entity owner, 
-            in Entity btInstance, in NodeData node, out ActiveNodeState activeNodeState)
+            in BTInstanceAspect btInstance, in BTData btData, in NodeData node, out ActiveNodeState activeNodeState)
         {
-            var action = BTHelper.CreateAction(ref ecb, "AIWaitAction", btInstance, owner, node);
+            var action = BTHelper.CreateAction(ref ecb, "AIWaitAction", btInstance, node);
             
             ecb.SetComponent(action, new AIWaitNode
             {

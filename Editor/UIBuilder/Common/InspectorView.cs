@@ -220,7 +220,17 @@ namespace Editor.SD.ECSBT.UIBuilder.Common
 
             void CreateIfNotExists(string id, Type type)
             {
-                if (_nodeDataDto.vars.FirstOrDefault(var => var.id == id) != null) return;
+                var btVar = _nodeDataDto.vars.FirstOrDefault(var => var.id == id);
+                if (btVar != null)
+                {
+                    if (btVar.Type == type)
+                    {
+                        return;
+                    }
+
+                    _nodeDataDto.vars.Remove(btVar);
+                }
+
                 var defaultValue = string.Empty;
                 if (type == typeof(bool))
                 {

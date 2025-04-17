@@ -1,7 +1,6 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using SD.ECSBT.BehaviourTree.ECS.Blackboard;
 using SD.ECSBT.BehaviourTree.ECS.Components;
 using SD.ECSBT.BehaviourTree.ECS.Instance;
 using SD.ECSBT.BehaviourTree.ECS.Nodes;
@@ -21,8 +20,7 @@ namespace SD.ECSBT.BehaviourTree.ECS
     {
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void BTNodeReturnHandlerDelegate(ref SystemState systemState, ref EntityCommandBuffer ecb,
-            ref BTInstanceData btInstanceData, ref BlackboardData blackboardData, in BTData btData, in Entity owner,
-            in Entity btInstance, in int nodeId);
+            in BTInstanceAspect btInstance, in BTData btData, in int nodeId);
 
         public static NodeType GetNodeType(Type type)
         {
@@ -41,18 +39,18 @@ namespace SD.ECSBT.BehaviourTree.ECS
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity CreateAction(ref EntityCommandBuffer ecb, in FixedString32Bytes actionName,
-            in Entity btInstance, in Entity owner, in NodeData nodeData)
+            in BTInstanceAspect btInstance, in NodeData nodeData)
         {
             var action = ecb.CreateEntity();
             ecb.SetName(action, actionName);
             ecb.AddComponent(action, new NodeInstanceData
             {
-                BTInstance = btInstance,
+                BTInstance = btInstance.Entity,
                 NodeId = nodeData.Id,
-                BTOwner = owner
+                BTOwner = btInstance.Owner
             });
             ecb.AddComponent(action, nodeData.NodeComponentType);
-            ecb.AddComponent(btInstance, new BTActiveNodeLink { ActiveNode = action });
+            ecb.AddComponent(btInstance.Entity, new BTActiveNodeLink { ActiveNode = action });
 
             return action;
         }
@@ -79,55 +77,30 @@ namespace SD.ECSBT.BehaviourTree.ECS
 
         [BurstCompile]
         public static void CleanupBTInstance(ref SystemState state, ref EntityManager entityManager,
-            ref EntityCommandBuffer ecb, ref BTInstanceData btInstanceData, ref BlackboardData blackboardData,
-            in BTData btData, in Entity owner,
-            in Entity btInstance, in BTDelegateData btDelegateData)
+            ref EntityCommandBuffer ecb, in BTInstanceAspect btInstance,
+            in BTData btData, in BTDelegateData btDelegateData)
         {
             // release active AutoReturn nodes
-            var autoReturnNodes = entityManager.GetBuffer<BTActiveAutoReturnNodeElement>(btInstance);
+            var autoReturnNodeBuffer = entityManager.GetBuffer<BTActiveAutoReturnNodeElement>(btInstance.Entity);
 
-            foreach (var element in autoReturnNodes)
+            foreach (var element in autoReturnNodeBuffer)
             {
-                btDelegateData.BTNodeReturnHandlerFunc.Invoke(ref state, ref ecb, ref btInstanceData, ref blackboardData, btData,
-                    owner, btInstance, element.NodeId);
+                btDelegateData.BTNodeReturnHandlerFunc.Invoke(ref state, ref ecb, btInstance, btData, element.NodeId);
             }
-            
+
             // clean up
-            // clean Blackboard
-            blackboardData.BoolVars.Dispose();
-            blackboardData.IntVars.Dispose();
-            blackboardData.FloatVars.Dispose();
-            blackboardData.Float2Vars.Dispose();
-            blackboardData.Float3Vars.Dispose();
-            blackboardData.EntityVars.Dispose();
-            blackboardData.QuaternionVars.Dispose();
-            blackboardData.StringVars.Dispose();
 
             // delete services
-            var serviceElements = entityManager.GetBuffer<BTServiceElement>(btInstance);
+            var serviceElements = entityManager.GetBuffer<BTServiceElement>(btInstance.Entity);
             foreach (var element in serviceElements)
             {
                 ecb.DestroyEntity(element.Service);
             }
 
             // delete active node
-            if (entityManager.HasComponent<BTActiveNodeLink>(btInstance))
-                ecb.DestroyEntity(entityManager.GetComponentData<BTActiveNodeLink>(btInstance).ActiveNode);
-            ecb.DestroyEntity(btInstance);
-        }
-
-        [BurstCompile]
-        public static void GetBTree(in DynamicBuffer<BTElement> btElements, in FixedString32Bytes btName,
-            out Entity btEntity)
-        {
-            for (var i = 0; i < btElements.Length; i++)
-            {
-                if (btElements[i].Name != btName) continue;
-                btEntity = btElements[i].BTEntity;
-                return;
-            }
-
-            btEntity = Entity.Null;
+            if (entityManager.HasComponent<BTActiveNodeLink>(btInstance.Entity))
+                ecb.DestroyEntity(entityManager.GetComponentData<BTActiveNodeLink>(btInstance.Entity).ActiveNode);
+            ecb.DestroyEntity(btInstance.Entity);
         }
     }
 }

@@ -19,19 +19,18 @@ namespace SD.ECSBT.BehaviourTree.ECS.Nodes.Decorator
         [BurstCompile]
         [NodeHandler(typeof(AIBlackboardBoolConditionNode))]
         public static void Run(ref SystemState systemState, ref EntityCommandBuffer ecb, 
-            ref BTInstanceData btInstanceData, ref Blackboard.BlackboardData blackboardData, in BTData btData, in Entity owner, 
-            in Entity btInstance, in NodeData node, out ActiveNodeState activeNodeState)
+            in BTInstanceAspect btInstance, in BTData btData, in NodeData node, out ActiveNodeState activeNodeState)
         {
             var varId = node.StringVars["Blackboard"];
             var condition = node.BoolVars["BoolCondition"];
-            if (blackboardData.BoolVars.TryGetValue(varId, out var value))
+            
+            var result = !condition;
+            if (btInstance.TryGetBB<bool>(varId, out var value))
             {
-                activeNodeState = value == condition ? ActiveNodeState.Success : ActiveNodeState.Failure;
+                result = value == condition;
             }
-            else
-            {
-                activeNodeState = !condition ? ActiveNodeState.Success : ActiveNodeState.Failure;
-            }
+            
+            activeNodeState = result ? ActiveNodeState.Success : ActiveNodeState.Failure;
         }
     }
 }

@@ -18,12 +18,14 @@ namespace SD.ECSBT.BehaviourTree.ECS.Process
         public void OnCreate(ref SystemState state)
         {
             state.RequireForUpdate<BTDelegateData>();
+            state.RequireForUpdate<BTDataElements>();
         }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
             var btDelegateData = SystemAPI.GetSingleton<BTDelegateData>();
+            var btDataElements = SystemAPI.GetSingleton<BTDataElements>();
             var entityManager = state.EntityManager;
 
             var ecb = new EntityCommandBuffer(Allocator.Temp);
@@ -32,54 +34,51 @@ namespace SD.ECSBT.BehaviourTree.ECS.Process
                 ecb.DestroyEntity(entity);
 
                 ref readonly var command = ref commandRO.ValueRO;
-                var btInstance = command.BTInstance;
-                if (!SystemAPI.Exists(btInstance)) continue;
-                var subscribers = SystemAPI.GetBuffer<AbortSubscriberElement>(btInstance);
-                ref var btInstanceData = ref SystemAPI.GetComponentRW<BTInstanceData>(btInstance).ValueRW;
-                ref var blackboard = ref SystemAPI.GetComponentRW<BlackboardData>(btInstance).ValueRW;
-                var owner = SystemAPI.GetComponent<BTOwner>(btInstance).Value;
-                ref readonly var btData = ref SystemAPI.GetComponentRO<BTData>(btInstanceData.BehaviorTree).ValueRO;
+                var btInstanceEntity = command.BTInstance;
+                if (!SystemAPI.Exists(btInstanceEntity)) continue;
+                var btInstance = SystemAPI.GetAspect<BTInstanceAspect>(btInstanceEntity);
+                var subscribers = SystemAPI.GetBuffer<AbortSubscriberElement>(btInstanceEntity);
+                var btData = btInstance.GetBTData(btDataElements);
 
                 var interrupterNode = -1;
                 foreach (var subscriber in subscribers)
                 {
                     if (command.BlackboardId != subscriber.BlackboardId) continue;
-                    if (subscriber.NodeId >= btInstanceData.ActiveNodeId) continue;
+                    if (subscriber.NodeId >= btInstance.InstanceDataRW.ValueRO.ActiveNodeId) continue;
                     if (subscriber.NotifyType != command.NotifyType) continue;
                     var relationAbortType =
-                        GetNodeType(subscriber.NodeId, btInstanceData.ActiveNodeId, in btData.Nodes);
+                        GetNodeType(subscriber.NodeId, btInstance.InstanceDataRW.ValueRO.ActiveNodeId, in btData.Nodes);
                     if ((subscriber.AbortType & relationAbortType) == AbortType.None) continue;
                     if (interrupterNode > subscriber.NodeId) continue;
                     interrupterNode = subscriber.NodeId;
                 }
 
                 if (interrupterNode < 0) continue;
-                btInstanceData.ActiveNodeId = interrupterNode;
-                btInstanceData.PreviousNodeId = -1;
-                btInstanceData.RunState = BTRunState.Digging;
-                btInstanceData.ActiveNodeState = ActiveNodeState.None;
+                btInstance.InstanceDataRW.ValueRW.ActiveNodeId = interrupterNode;
+                btInstance.InstanceDataRW.ValueRW.PreviousNodeId = -1;
+                btInstance.InstanceDataRW.ValueRW.RunState = BTRunState.Digging;
+                btInstance.InstanceDataRW.ValueRW.ActiveNodeState = ActiveNodeState.None;
 
                 // release active AutoReturn nodes below new node
-                var autoReturnNodes = entityManager.GetBuffer<BTActiveAutoReturnNodeElement>(btInstance);
+                var autoReturnNodes = entityManager.GetBuffer<BTActiveAutoReturnNodeElement>(btInstanceEntity);
 
                 for (var i = 0; i < autoReturnNodes.Length; i++)
                 {
                     var element = autoReturnNodes[i];
-                    if (btInstanceData.ActiveNodeId > element.NodeId) continue;
-                    btDelegateData.BTNodeReturnHandlerFunc.Invoke(ref state, ref ecb, ref btInstanceData,
-                        ref blackboard, btData, owner, btInstance, element.NodeId);
+                    if (btInstance.InstanceDataRW.ValueRO.ActiveNodeId > element.NodeId) continue;
+                    btDelegateData.BTNodeReturnHandlerFunc.Invoke(ref state, ref ecb, in btInstance, btData, element.NodeId);
                     autoReturnNodes.RemoveAt(i);
                     i--;
                 }
 
                 // stop services below new node
-                BTServiceHelper.DeactivateServicesBelowNode(ref entityManager, in interrupterNode, in btInstance);
+                BTServiceHelper.DeactivateServicesBelowNode(ref entityManager, in interrupterNode, in btInstanceEntity);
 
-                if (SystemAPI.HasComponent<BTActiveNodeLink>(btInstance))
+                if (SystemAPI.HasComponent<BTActiveNodeLink>(btInstanceEntity))
                 {
-                    ecb.SetComponentEnabled<BTLogicEnabled>(btInstance, true);
-                    ecb.DestroyEntity(SystemAPI.GetComponentRO<BTActiveNodeLink>(btInstance).ValueRO.ActiveNode);
-                    ecb.RemoveComponent<BTActiveNodeLink>(btInstance);
+                    ecb.SetComponentEnabled<BTLogicEnabled>(btInstanceEntity, true);
+                    ecb.DestroyEntity(SystemAPI.GetComponentRO<BTActiveNodeLink>(btInstanceEntity).ValueRO.ActiveNode);
+                    ecb.RemoveComponent<BTActiveNodeLink>(btInstanceEntity);
                 }
             }
 

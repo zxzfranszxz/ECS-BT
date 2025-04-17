@@ -30,39 +30,34 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
             var buffer = SystemAPI.GetSingletonBuffer<BTDataSOElement>();
             var bufferEntity = SystemAPI.GetSingletonEntity<BTDataSOElement>();
 
-            var ecb = new EntityCommandBuffer(Allocator.Temp);
-
-            var btBufferEntity = state.EntityManager.CreateSingletonBuffer<BTElement>();
-
+            state.EntityManager.CreateSingleton<BTDataElements>("BTDataElements");
+            ref var dataElements = ref SystemAPI.GetSingletonRW<BTDataElements>().ValueRW;
+            dataElements.BTDataMap = new NativeHashMap<FixedString32Bytes, BTData>(buffer.Length, Allocator.Persistent);
+            
             foreach (var btDataSOElement in buffer)
             {
                 var btDataSO = btDataSOElement.BTData.Value;
 
-                var btEntity = ecb.CreateEntity();
-                ecb.SetName(btEntity, btDataSO.name);
-                
                 var btData = new BTData
                 {
                     BTName = btDataSO.name,
                     Nodes = new NativeArray<NodeData>(btDataSO.nodes.Count, Allocator.Persistent)
                 };
-                
+
                 var rootNode = btDataSO.RootNode;
-                var nodeId = 0; 
-                
+                var nodeId = 0;
+
                 // add all nodes recursively
                 AddNodes(ref btData, ref nodeId, rootNode, btDataSO.nodes);
-                
-                ecb.AddComponent(btEntity, btData);
-                ecb.AppendToBuffer(btBufferEntity, new BTElement { Name = btDataSO.name, BTEntity = btEntity });
+
+                dataElements.BTDataMap.Add(btDataSO.name, btData);
             }
 
             state.EntityManager.DestroyEntity(bufferEntity);
-            ecb.Playback(state.EntityManager);
-            ecb.Dispose();
         }
 
-        private static void AddNodes(ref BTData btData, ref int nodeId, NodeDataDto nodeDataDto, List<NodeDataDto> nodesDto)
+        private static void AddNodes(ref BTData btData, ref int nodeId, NodeDataDto nodeDataDto,
+            List<NodeDataDto> nodesDto)
         {
             var nodeData = new NodeData
             {
@@ -73,25 +68,26 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
                 IsAutoReturn = typeof(IAIAutoReturnNode).IsAssignableFrom(nodeDataDto.Type),
                 Guid = nodeDataDto.Guid
             };
-            
+
             // 1) add node vars
             if (nodeDataDto.vars.Count > 0 || nodeDataDto.blackboardVars.Count > 0)
             {
                 InitNodeVars(ref nodeData, ref nodeDataDto);
             }
-            
+
             // 2) setup children
-            
+
             // children sorted by priority position from left to right
-            var children = nodesDto.Where(dto => dto.ParentGuid == nodeData.Guid).OrderBy(dto => dto.position.x).ToList();
-            
+            var children = nodesDto.Where(dto => dto.ParentGuid == nodeData.Guid).OrderBy(dto => dto.position.x)
+                .ToList();
+
             btData.Nodes[nodeData.Id] = nodeData;
             nodeId++;
             foreach (var dataDto in children)
             {
                 AddNodes(ref btData, ref nodeId, dataDto, nodesDto);
             }
-            
+
             // 2.1) set children
             if (children.Count > 0)
             {
@@ -104,7 +100,7 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
                     i++;
                 }
             }
-            
+
             // 2.2) set parent
             foreach (var node in btData.Nodes)
             {
@@ -112,17 +108,17 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
                 nodeData.ParentId = node.Id;
                 break;
             }
-            
+
             btData.Nodes[nodeData.Id] = nodeData;
         }
 
         private static void InitNodeVars(ref NodeData nodeData, ref NodeDataDto nodeDataDto)
         {
             var supportedTypes = BTVar.SupportedTypes().ToList();
-            
+
             // bool
             var vars = nodeDataDto.vars.Where(var => var.Type == typeof(bool)).ToList();
-            if(vars.Any())
+            if (vars.Any())
             {
                 nodeData.BoolVars = new NativeHashMap<FixedString32Bytes, bool>(vars.Count, Allocator.Persistent);
                 foreach (var btVar in vars)
@@ -130,61 +126,65 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
                     nodeData.BoolVars.Add(btVar.id, bool.Parse(btVar.value));
                 }
             }
-            
+
             // unsupported enums int
+
             vars = nodeDataDto.vars.Where(var => var.Type.IsEnum && !supportedTypes.Contains(var.Type)).ToList();
-            if(vars.Any())
+            if (vars.Any())
             {
-                if(nodeData.IntVars.IsCreated == false)
+                if (nodeData.IntVars.IsCreated == false)
                     nodeData.IntVars = new NativeHashMap<FixedString32Bytes, int>(vars.Count, Allocator.Persistent);
                 foreach (var btVar in vars)
                 {
                     nodeData.IntVars.Add(btVar.id, (int)Enum.Parse(btVar.Type, btVar.value));
                 }
             }
-            
+
             // int
             vars = nodeDataDto.vars.Where(var => var.Type == typeof(int)).ToList();
-            if(vars.Any())
+            if (vars.Any())
             {
-                if(nodeData.IntVars.IsCreated == false)
+                if (nodeData.IntVars.IsCreated == false)
                     nodeData.IntVars = new NativeHashMap<FixedString32Bytes, int>(vars.Count, Allocator.Persistent);
                 foreach (var btVar in vars)
                 {
                     nodeData.IntVars.Add(btVar.id, int.Parse(btVar.value));
                 }
             }
-            
+
             // float
             vars = nodeDataDto.vars.Where(var => var.Type == typeof(float)).ToList();
-            if(vars.Any())
+            if (vars.Any())
             {
                 nodeData.FloatVars = new NativeHashMap<FixedString32Bytes, float>(vars.Count, Allocator.Persistent);
                 foreach (var btVar in vars)
                 {
-                    nodeData.FloatVars.Add(btVar.id, float.Parse(btVar.value, NumberStyles.Float, CultureInfo.InvariantCulture));
+                    nodeData.FloatVars.Add(btVar.id,
+                        float.Parse(btVar.value, NumberStyles.Float, CultureInfo.InvariantCulture));
                 }
             }
-            
+
             // string
             vars = nodeDataDto.vars.Where(var => var.Type == typeof(string)).ToList();
-            if(vars.Any() || nodeDataDto.blackboardVars.Any())
+            if (vars.Any() || nodeDataDto.blackboardVars.Any())
             {
                 var capacity = vars.Count + nodeDataDto.blackboardVars.Count;
-                nodeData.StringVars = new NativeHashMap<FixedString32Bytes, FixedString32Bytes>(capacity, Allocator.Persistent);
+                nodeData.StringVars =
+                    new NativeHashMap<FixedString32Bytes, FixedString32Bytes>(capacity, Allocator.Persistent);
                 foreach (var btVar in vars)
                 {
                     nodeData.StringVars.Add(btVar.id, btVar.value);
                 }
+
                 foreach (var varLink in nodeDataDto.blackboardVars)
                 {
                     nodeData.StringVars.Add(varLink.id, varLink.varId);
                 }
             }
-            
+
             // float2
             vars = nodeDataDto.vars.Where(var => var.Type == typeof(Vector2)).ToList();
-            if(vars.Any())
+            if (vars.Any())
             {
                 nodeData.Float2Vars = new NativeHashMap<FixedString32Bytes, float2>(vars.Count, Allocator.Persistent);
                 foreach (var btVar in vars)
@@ -193,10 +193,10 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
                     nodeData.Float2Vars.Add(btVar.id, value);
                 }
             }
-            
+
             // float3
             vars = nodeDataDto.vars.Where(var => var.Type == typeof(Vector3)).ToList();
-            if(vars.Any())
+            if (vars.Any())
             {
                 nodeData.Float3Vars = new NativeHashMap<FixedString32Bytes, float3>(vars.Count, Allocator.Persistent);
                 foreach (var btVar in vars)
@@ -205,36 +205,36 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
                     nodeData.Float3Vars.Add(btVar.id, value);
                 }
             }
-            
+
             // AbortType
             vars = nodeDataDto.vars.Where(var => var.Type == typeof(AbortType)).ToList();
-            if(vars.Any())
+            if (vars.Any())
             {
-                if(!nodeData.IntVars.IsCreated)
+                if (!nodeData.IntVars.IsCreated)
                     nodeData.IntVars = new NativeHashMap<FixedString32Bytes, int>(vars.Count, Allocator.Persistent);
                 foreach (var btVar in vars)
                 {
                     nodeData.IntVars.Add(btVar.id, (int)Enum.Parse(btVar.Type, btVar.value));
                 }
             }
-            
+
             // NotifyType
             vars = nodeDataDto.vars.Where(var => var.Type == typeof(NotifyType)).ToList();
-            if(vars.Any())
+            if (vars.Any())
             {
-                if(!nodeData.IntVars.IsCreated)
+                if (!nodeData.IntVars.IsCreated)
                     nodeData.IntVars = new NativeHashMap<FixedString32Bytes, int>(vars.Count, Allocator.Persistent);
                 foreach (var btVar in vars)
                 {
                     nodeData.IntVars.Add(btVar.id, (int)Enum.Parse(btVar.Type, btVar.value));
                 }
             }
-            
+
             // BlackboardConditionType
             vars = nodeDataDto.vars.Where(var => var.Type == typeof(BlackboardConditionType)).ToList();
-            if(vars.Any())
+            if (vars.Any())
             {
-                if(!nodeData.IntVars.IsCreated)
+                if (!nodeData.IntVars.IsCreated)
                     nodeData.IntVars = new NativeHashMap<FixedString32Bytes, int>(vars.Count, Allocator.Persistent);
                 foreach (var btVar in vars)
                 {
@@ -246,13 +246,14 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
         [BurstCompile]
         public void OnDestroy(ref SystemState state)
         {
-            foreach (var btData in SystemAPI.Query<RefRW<BTData>>())
+            var dataElements = SystemAPI.GetSingleton<BTDataElements>();
+            var valueArray = dataElements.BTDataMap.GetValueArray(Allocator.Temp);
+            foreach (var btData in valueArray)
             {
-                if (btData.ValueRW.Nodes.IsCreated)
+                if (btData.Nodes.IsCreated)
                 {
-                    for (var i = 0; i < btData.ValueRW.Nodes.Length; i++)
+                    foreach (var nodeData in btData.Nodes)
                     {
-                        var nodeData = btData.ValueRW.Nodes[i];
                         nodeData.Children.Dispose();
 
                         nodeData.BoolVars.Dispose();
@@ -262,10 +263,10 @@ namespace SD.ECSBT.BehaviourTree.ECS.Setup
                         nodeData.Float3Vars.Dispose();
                         nodeData.StringVars.Dispose();
                     }
-
-                    btData.ValueRW.Nodes.Dispose();
                 }
+                btData.Nodes.Dispose();
             }
+            dataElements.BTDataMap.Dispose();
         }
     }
 }

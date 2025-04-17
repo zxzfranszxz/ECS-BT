@@ -21,28 +21,12 @@ namespace SD.ECSBT.BehaviourTree.ECS.Nodes.Decorator
         [BurstCompile]
         [NodeHandler(typeof(AIBlackboardConditionNode))]
         public static void Run(ref SystemState systemState, ref EntityCommandBuffer ecb, 
-            ref BTInstanceData btInstanceData, ref Blackboard.BlackboardData blackboardData, in BTData btData, in Entity owner, 
-            in Entity btInstance, in NodeData node, out ActiveNodeState activeNodeState)
+            in BTInstanceAspect btInstance, in BTData btData, in NodeData node, out ActiveNodeState activeNodeState)
         {
             var varId = node.StringVars["Blackboard"];
             var condition = (BlackboardConditionType)node.IntVars["ConditionType"];
-            var isSet = blackboardData.BoolVars.ContainsKey(varId) ||
-                        blackboardData.IntVars.ContainsKey(varId) ||
-                        blackboardData.FloatVars.ContainsKey(varId) ||
-                        blackboardData.StringVars.ContainsKey(varId) ||
-                        blackboardData.Float2Vars.ContainsKey(varId) ||
-                        blackboardData.Float3Vars.ContainsKey(varId) ||
-                        blackboardData.EntityVars.ContainsKey(varId) ||
-                        blackboardData.QuaternionVars.ContainsKey(varId);
 
-            if (isSet && blackboardData.EntityVars.TryGetValue(varId, out var entity))
-            {
-                if(!systemState.EntityManager.Exists(entity))
-                {
-                    blackboardData.EntityVars.Remove(varId);
-                    isSet = false;
-                }
-            }
+            var isSet = btInstance.IsBBSet(varId);
             
             activeNodeState = condition switch
             {

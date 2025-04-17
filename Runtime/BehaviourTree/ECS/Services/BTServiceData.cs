@@ -1,3 +1,4 @@
+using Unity.Collections;
 using Unity.Entities;
 
 namespace SD.ECSBT.BehaviourTree.ECS.Services
@@ -6,6 +7,7 @@ namespace SD.ECSBT.BehaviourTree.ECS.Services
     {
         public float Frequency;
         public float CurrentTime;
-        public Entity BTEntity;
+
+        public FixedString32Bytes BehaviorTree;
     }
 }

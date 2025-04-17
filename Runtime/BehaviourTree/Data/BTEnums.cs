@@ -13,7 +13,8 @@ namespace SD.ECSBT.BehaviourTree.Data
     
     public enum NotifyType
     {
-        OnValueChange = 0,
+        None = 0,
+        OnValueChange,
         OnValueExistStateChange
     }
     

@@ -61,9 +61,7 @@ namespace Editor.SD.ECSBT.CodeGeneration
                 var systemParam = isPackageHandler ? string.Empty : "ref system,";
                 sb.Append($@"
                 case {typeHash}:
-                    {nodeHandleMethod.DeclaringType!.Name}.{nodeHandleMethod.Name}(
-                        ref systemState, {systemParam} ref ecb, ref btInstanceData, ref blackboardData,
-                        in btData, in owner, in btInstance, in node, out activeNodeState);
+                    {nodeHandleMethod.DeclaringType!.Name}.{nodeHandleMethod.Name}(ref systemState, {systemParam} ref ecb, in btInstance, in btData, in node, out activeNodeState);
                     break;");
             }
             
@@ -77,9 +75,7 @@ namespace Editor.SD.ECSBT.CodeGeneration
                 
                 sb.Append($@"
                 case {typeHash}:
-                    {nodeHandleMethod.DeclaringType!.Name}.{nodeHandleMethod.Name}(
-                        ref systemState, ref ecb, ref btInstanceData, ref blackboardData,
-                        in btData, in owner, in btInstance, in node);
+                    {nodeHandleMethod.DeclaringType!.Name}.{nodeHandleMethod.Name}(ref systemState, ref ecb, in btInstance, in btData, in node);
                     break;");
             }
             
@@ -108,10 +104,9 @@ namespace {0}
     {{
         [BurstCompile]
         public static void RunNode(ref SystemState systemState, ref BTProcessSystem system, ref EntityCommandBuffer ecb,
-            ref BTInstanceData btInstanceData, ref BlackboardData blackboardData, in BTData btData, in Entity owner, 
-            in Entity btInstance, out ActiveNodeState activeNodeState)
+            in BTInstanceAspect btInstance, in BTData btData, out ActiveNodeState activeNodeState)
         {{
-            var node = btData.Nodes[btInstanceData.ActiveNodeId];
+            var node = btData.Nodes[btInstance.InstanceDataRW.ValueRO.ActiveNodeId];
             var nodeType = node.NodeComponentType;
 
             activeNodeState = ActiveNodeState.None;
@@ -125,7 +120,7 @@ namespace {0}
             var entityManager = systemState.EntityManager;
             if(node.NodeType is NodeType.Service)
             {{
-                BTServiceHelper.SetActiveService(ref entityManager, in node.Id, in btInstance, true);
+                BTServiceHelper.SetActiveService(ref entityManager, in node.Id, in btInstance.Entity, true);
             }}
 
             switch (node.StableTypeHash)
@@ -141,17 +136,16 @@ namespace {0}
 
         [BurstCompile]
         public static void ReturnNode(ref SystemState systemState, ref EntityCommandBuffer ecb,
-            ref BTInstanceData btInstanceData, ref BlackboardData blackboardData, in BTData btData, in Entity owner, 
-            in Entity btInstance, in int nodeId = -1)
+            in BTInstanceAspect btInstance, in BTData btData, in int nodeId = -1)
         {
-            var id = nodeId >= 0 ? nodeId : btInstanceData.ActiveNodeId;
+            var id = nodeId >= 0 ? nodeId : btInstance.InstanceDataRW.ValueRO.ActiveNodeId;
             var node = btData.Nodes[id];
             var nodeType = node.NodeComponentType;
 
             var entityManager = systemState.EntityManager;
             if(node.NodeType is NodeType.Service)
             {
-                BTServiceHelper.SetActiveService(ref entityManager, in node.Id, in btInstance, false);
+                BTServiceHelper.SetActiveService(ref entityManager, in node.Id, in btInstance.Entity, false);
                 return;
             }
 

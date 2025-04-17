@@ -51,15 +51,12 @@ namespace {1}
             var ecb = new EntityCommandBuffer(Allocator.Temp);
             var entityManager = state.EntityManager;
 
-            foreach (var (btInstanceRW, blackboardDataRW, ownerRO, autoReturnNodeElements, entity) in SystemAPI
-                         .Query<RefRW<BTInstanceData>, RefRW<BlackboardData>, RefRO<BTOwner>, DynamicBuffer<BTActiveAutoReturnNodeElement>>()
+            foreach (var (btInstance, autoReturnNodeElements, entity) in SystemAPI
+                         .Query<BTInstanceAspect, DynamicBuffer<BTActiveAutoReturnNodeElement>>()
                          .WithAll<BTLogicEnabled>().WithEntityAccess())
             {{
-                ref var btInstanceData = ref btInstanceRW.ValueRW;
-                ref var blackboardData = ref blackboardDataRW.ValueRW;
-                if (!SystemAPI.HasComponent<BTData>(btInstanceData.BehaviorTree)) continue;
-                ref readonly var btData = ref SystemAPI.GetComponentRO<BTData>(btInstanceData.BehaviorTree).ValueRO;
-                var owner = ownerRO.ValueRO.Value;
+                ref var btInstanceData = ref btInstance.InstanceDataRW.ValueRW;
+                var btData = btInstance.GetBTData(btDataElements);
 
                 if (btInstanceData is {{ RunState: BTRunState.None, ActiveNodeId: 0 }})
                 {{
@@ -70,7 +67,7 @@ namespace {1}
                 {{
                     if (btInstanceData.RunState == BTRunState.Digging)
                     {{
-                        {3}.RunNode(ref state, ref this, ref ecb, ref btInstanceData, ref blackboardData, in btData, in owner, in entity, out var result);
+                        {3}.RunNode(ref state, ref this, ref ecb, in btInstance, in btData, out var result);
                         btInstanceData.ActiveNodeState = result;
                         if (result == ActiveNodeState.Running)
                         {{
@@ -81,7 +78,7 @@ namespace {1}
                     }}
                     else if (btInstanceData.RunState == BTRunState.Returning)
                     {{
-                        {3}.ReturnNode(ref state, ref this, ref ecb, ref btInstanceData, ref blackboardData, in btData, in owner, in entity);
+                        {3}.ReturnNode(ref state, ref this, ref ecb, ref btInstanceData, in bbAspect, in btData, in owner, in entity);
                         BTNodeResultHandler.ReturnNodeResult(ref btInstanceData, in btData, autoReturnNodeElements);
                     }}
                     else

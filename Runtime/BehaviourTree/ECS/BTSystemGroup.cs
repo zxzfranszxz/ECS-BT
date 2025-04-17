@@ -2,7 +2,7 @@
 
 namespace SD.ECSBT.BehaviourTree.ECS
 {
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateInGroup(typeof(SimulationSystemGroup), OrderFirst = true)]
     public partial class BTSystemGroup : ComponentSystemGroup
     {
     }
