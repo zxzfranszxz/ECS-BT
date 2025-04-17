@@ -25,7 +25,9 @@ namespace SD.ECSBT.BehaviourTree.ECS.Instance
 
         public BTData GetBTData(in BTDataElements btDataElements)
         {
-            return btDataElements.BTDataMap[BehaviorTree];
+            if(btDataElements.BTDataMap.IsCreated)
+                return btDataElements.BTDataMap[BehaviorTree];
+            return default;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
